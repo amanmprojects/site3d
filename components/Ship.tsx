@@ -11,11 +11,10 @@ import { sceneRef } from '@/lib/scene'
 
 const keys = {
   fwd: false,
-  back: false,
+  pitchUp: false,
+  pitchDown: false,
   left: false,
   right: false,
-  up: false,
-  down: false,
   rollL: false,
   rollR: false,
   boost: false,
@@ -24,7 +23,6 @@ const keys = {
 const HOME = new THREE.Vector3(0, 90, 480)
 
 const _fwd = new THREE.Vector3()
-const _up = new THREE.Vector3(0, 1, 0)
 const _acc = new THREE.Vector3()
 const _tmp = new THREE.Vector3()
 const _dir = new THREE.Vector3()
@@ -81,11 +79,11 @@ export function Ship() {
       switch (e.code) {
         case 'KeyW':
         case 'ArrowUp':
-          keys.fwd = down
+          keys.pitchUp = down
           break
         case 'KeyS':
         case 'ArrowDown':
-          keys.back = down
+          keys.pitchDown = down
           break
         case 'KeyA':
         case 'ArrowLeft':
@@ -96,11 +94,7 @@ export function Ship() {
           keys.right = down
           break
         case 'Space':
-          keys.up = down
-          break
-        case 'ControlLeft':
-        case 'KeyC':
-          keys.down = down
+          keys.fwd = down
           break
         case 'KeyQ':
           keys.rollL = down
@@ -189,9 +183,8 @@ export function Ship() {
 
       _acc.set(0, 0, 0)
       if (keys.fwd) _acc.addScaledVector(_fwd, accel)
-      if (keys.back) _acc.addScaledVector(_fwd, -accel * 0.7)
-      if (keys.up) _acc.addScaledVector(_up, accel * 0.9)
-      if (keys.down) _acc.addScaledVector(_up, -accel * 0.9)
+      if (keys.pitchUp) euler.current.x += 1.3 * delta
+      if (keys.pitchDown) euler.current.x -= 1.3 * delta
 
       let rollInput = 0
       if (keys.rollL) rollInput += 1
@@ -232,9 +225,9 @@ export function Ship() {
       camInit.current = true
     }
 
-    const stiff = warpTo ? 10 : 6
+    const stiff = warpTo ? 26 : 20
     camPos.current.lerp(_target, 1 - Math.exp(-stiff * delta))
-    camQuat.current.slerp(ship.quaternion, 1 - Math.exp(-(stiff + 1) * delta))
+    camQuat.current.slerp(ship.quaternion, 1 - Math.exp(-(stiff + 2) * delta))
     camera.position.copy(camPos.current)
     camera.quaternion.copy(camQuat.current)
 
