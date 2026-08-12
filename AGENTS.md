@@ -41,7 +41,7 @@ There is **no lint script**. Always run `npm run typecheck` (and ideally `npm ru
 | `components/Ship.tsx` | Ship (loads GLB model via `useGLTF` + `useAnimations`) + flight controls + chase camera |
 | `components/SolarSystem.tsx` | Star + planets + orbit lines; proximity detection → store |
 | `components/Planet.tsx` | One planet: procedural geometry, atmosphere, rings, Html label |
-| `components/Star.tsx` | Central star (emissive core, atmosphere shells, point light) |
+| `components/Star.tsx` | Central sun (animated GLB `stroming_sun.glb` + radial-gradient glow sprite + point light) |
 | `components/NightSky.tsx` | Background skybox (HDRI equirect texture, slowly rotating) |
 | `components/Starfield.tsx` | Near-field parallax stars (drei `<Stars>`) |
 | `components/Effects.tsx` | Postprocessing (Bloom, Vignette, Noise) |
@@ -52,6 +52,7 @@ There is **no lint script**. Always run `npm run typecheck` (and ideally `npm ru
 | `lib/store.ts`, `lib/controls.ts`, `lib/scene.ts`, `lib/planetRegistry.ts` | Client state plumbing (see above) |
 | `public/sky/` | HDRI sky texture (`NightSkyHDRI008_8K.jpg`, ~22MB) |
 | `public/ship/ship.glb` | Animated ship model (multi-universe space ship, ~21MB) |
+| `public/sun/stroming_sun.glb` | Animated sun model (layered rotating/scale-pulsing shells) |
 | `my-info.md` | Content source (bio, socials, project list) |
 
 ## Where to change things
@@ -65,4 +66,4 @@ There is **no lint script**. Always run `npm run typecheck` (and ideally `npm ru
 
 ## Controls (for reference)
 
-W/S thrust · A/D yaw · mouse steer (pointer-locked) · Q/E roll · Space/Ctrl up/down · Shift boost · R reset · Esc release cursor · Enter opens the targeted project link.
+W/S pitch · A/D yaw · mouse steer (pointer-locked) · Q/E roll · Space thrust · Shift boost · R reset · Esc release cursor · Enter opens the targeted project link.
