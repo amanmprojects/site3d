@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
+import { useAnimations, useGLTF } from '@react-three/drei'
 import * as THREE from 'three'
 import { useApp } from '@/lib/store'
 import { setLockImpl } from '@/lib/controls'
@@ -39,6 +40,9 @@ const _q = new THREE.Quaternion()
 const CHASE_OFFSET = new THREE.Vector3(0, 1.6, 8)
 const FWD = new THREE.Vector3(0, 0, -1)
 
+const MODEL_SCALE = 0.42
+const MODEL_ROTATION: [number, number, number] = [0, Math.PI, 0]
+
 const clamp = (v: number, lo: number, hi: number) =>
   Math.max(lo, Math.min(hi, v))
 
@@ -58,6 +62,7 @@ function setThruster(mesh: THREE.Mesh | null, amt: number) {
 export function Ship() {
   const { camera, gl } = useThree()
   const shipRef = useRef<THREE.Group>(null)
+  const modelRef = useRef<THREE.Group>(null)
   const flameRef = useRef<THREE.Group>(null)
   const flameOuterRef = useRef<THREE.Mesh>(null)
   const flameInnerRef = useRef<THREE.Mesh>(null)
@@ -70,6 +75,7 @@ export function Ship() {
   const euler = useRef(new THREE.Euler(-0.18, 0, 0, 'YXZ'))
   const mouseVel = useRef(new THREE.Vector2())
   const vis = useRef({ thrust: 0, l: 0, r: 0, u: 0, d: 0 })
+  const animAction = useRef<THREE.AnimationAction | null>(null)
   const camPos = useRef(new THREE.Vector3())
   const camQuat = useRef(new THREE.Quaternion())
   const camInit = useRef(false)
@@ -78,6 +84,19 @@ export function Ship() {
   const setSpeed = useApp((s) => s.setSpeed)
   const warpTo = useApp((s) => s.warpTo)
   const cancelWarp = useApp((s) => s.cancelWarp)
+
+  const { scene, animations } = useGLTF('/ship/ship.glb')
+  const { actions } = useAnimations(animations, modelRef)
+
+  useEffect(() => {
+    const clip = animations[0]
+    if (!clip) return
+    const action = actions[clip.name]
+    if (action) {
+      animAction.current = action
+      action.reset().play()
+    }
+  }, [animations, actions])
 
   useEffect(() => {
     sceneRef.camera = camera as THREE.PerspectiveCamera
@@ -225,6 +244,10 @@ export function Ship() {
     const thrustTarget = keys.fwd ? (keys.boost ? 1 : 0.75) : 0
     v.thrust += (thrustTarget - v.thrust) * k
 
+    if (animAction.current) {
+      animAction.current.timeScale = 0.25 + v.thrust * 1.75
+    }
+
     const strafe = (keys.right ? 1 : 0) - (keys.left ? 1 : 0)
     const vert = (keys.up ? 1 : 0) - (keys.down ? 1 : 0)
     const roll = (keys.rollR ? 1 : 0) - (keys.rollL ? 1 : 0)
@@ -298,85 +321,16 @@ export function Ship() {
     setSpeed(Math.round(vel.current.length()))
   })
 
-  const hull = (
-    <meshStandardMaterial color="#b8c4d0" metalness={0.65} roughness={0.35} />
-  )
-  const dark = (
-    <meshStandardMaterial color="#2a3440" metalness={0.5} roughness={0.5} />
-  )
-
   return (
     <group ref={shipRef} position={[0, 30, 160]}>
-      {/* hull */}
-      <mesh position={[0, 0, -1.15]} rotation={[-Math.PI / 2, 0, 0]}>
-        <coneGeometry args={[0.42, 1.25, 16]} />
-        {hull}
-      </mesh>
-      <mesh position={[0, 0, 0.05]} rotation={[-Math.PI / 2, 0, 0]}>
-        <cylinderGeometry args={[0.42, 0.42, 1.3, 16]} />
-        {hull}
-      </mesh>
-      <mesh position={[0, 0, 0.9]} rotation={[-Math.PI / 2, 0, 0]}>
-        <cylinderGeometry args={[0.36, 0.42, 0.5, 16]} />
-        {dark}
-      </mesh>
-      <mesh position={[0, 0, 1.2]} rotation={[-Math.PI / 2, 0, 0]}>
-        <cylinderGeometry args={[0.3, 0.36, 0.2, 16]} />
-        <meshStandardMaterial
-          color="#14181d"
-          emissive="#ff7a1a"
-          emissiveIntensity={0.6}
-        />
-      </mesh>
-
-      {/* cockpit */}
-      <mesh position={[0, 0.28, -0.4]} scale={[1, 0.65, 1.3]}>
-        <sphereGeometry args={[0.26, 16, 12]} />
-        <meshStandardMaterial
-          color="#0a1120"
-          emissive="#2dd4bf"
-          emissiveIntensity={0.55}
-          roughness={0.1}
-          metalness={0.2}
-        />
-      </mesh>
-
-      {/* wings */}
-      <mesh
-        position={[1.15, -0.03, 0.05]}
-        rotation={[0, -0.35, 0.12]}
-      >
-        <boxGeometry args={[2.0, 0.05, 0.85]} />
-        {hull}
-      </mesh>
-      <mesh
-        position={[-1.15, -0.03, 0.05]}
-        rotation={[0, 0.35, -0.12]}
-      >
-        <boxGeometry args={[2.0, 0.05, 0.85]} />
-        {hull}
-      </mesh>
-
-      {/* nav lights */}
-      <mesh position={[2.1, -0.03, 0.4]}>
-        <sphereGeometry args={[0.05, 8, 8]} />
-        <meshBasicMaterial color="#ff4444" />
-      </mesh>
-      <mesh position={[-2.1, -0.03, 0.4]}>
-        <sphereGeometry args={[0.05, 8, 8]} />
-        <meshBasicMaterial color="#44ff88" />
-      </mesh>
-
-      {/* tail fin */}
-      <mesh position={[0, 0.38, 0.8]} rotation={[0.15, 0, 0]}>
-        <boxGeometry args={[0.05, 0.6, 0.6]} />
-        {dark}
-      </mesh>
+      <group ref={modelRef} rotation={MODEL_ROTATION} scale={MODEL_SCALE}>
+        <primitive object={scene} />
+      </group>
 
       {/* engine flame */}
-      <group ref={flameRef} position={[0, 0, 1.35]} visible={false}>
+      <group ref={flameRef} position={[0, 0.1, 2.6]} visible={false}>
         <mesh ref={flameOuterRef} rotation={[Math.PI / 2, 0, 0]}>
-          <coneGeometry args={[0.26, 1.5, 12, 1, true]} />
+          <coneGeometry args={[0.3, 1.8, 12, 1, true]} />
           <meshBasicMaterial
             color="#ff7a1a"
             transparent
@@ -386,7 +340,7 @@ export function Ship() {
           />
         </mesh>
         <mesh ref={flameInnerRef} rotation={[Math.PI / 2, 0, 0]}>
-          <coneGeometry args={[0.13, 1.0, 12, 1, true]} />
+          <coneGeometry args={[0.15, 1.2, 12, 1, true]} />
           <meshBasicMaterial
             color="#fff0c0"
             transparent
@@ -398,7 +352,7 @@ export function Ship() {
       </group>
 
       {/* RCS thrusters */}
-      <mesh ref={rcsRRef} position={[0.95, 0, 0.3]} rotation={[0, 0, -Math.PI / 2]} visible={false}>
+      <mesh ref={rcsRRef} position={[1.5, 0.2, 0.5]} rotation={[0, 0, -Math.PI / 2]} visible={false}>
         <coneGeometry args={[0.1, 0.5, 8, 1, true]} />
         <meshBasicMaterial
           color="#7fd8ff"
@@ -407,7 +361,7 @@ export function Ship() {
           depthWrite={false}
         />
       </mesh>
-      <mesh ref={rcsLRef} position={[-0.95, 0, 0.3]} rotation={[0, 0, Math.PI / 2]} visible={false}>
+      <mesh ref={rcsLRef} position={[-1.5, 0.2, 0.5]} rotation={[0, 0, Math.PI / 2]} visible={false}>
         <coneGeometry args={[0.1, 0.5, 8, 1, true]} />
         <meshBasicMaterial
           color="#7fd8ff"
@@ -416,7 +370,7 @@ export function Ship() {
           depthWrite={false}
         />
       </mesh>
-      <mesh ref={rcsURef} position={[0, 0.5, 0.3]} visible={false}>
+      <mesh ref={rcsURef} position={[0, 0.9, 0.5]} visible={false}>
         <coneGeometry args={[0.1, 0.5, 8, 1, true]} />
         <meshBasicMaterial
           color="#7fd8ff"
@@ -425,7 +379,7 @@ export function Ship() {
           depthWrite={false}
         />
       </mesh>
-      <mesh ref={rcsDRef} position={[0, -0.5, 0.3]} rotation={[0, 0, Math.PI]} visible={false}>
+      <mesh ref={rcsDRef} position={[0, -0.9, 0.5]} rotation={[0, 0, Math.PI]} visible={false}>
         <coneGeometry args={[0.1, 0.5, 8, 1, true]} />
         <meshBasicMaterial
           color="#7fd8ff"
@@ -436,7 +390,7 @@ export function Ship() {
       </mesh>
 
       {/* self-fill light so the ship reads in any sun angle */}
-      <pointLight intensity={6} distance={30} decay={2} color="#cfe8ff" position={[0, 1, 3]} />
+      <pointLight intensity={6} distance={30} decay={2} color="#cfe8ff" position={[0, 1, 4]} />
     </group>
   )
 }
