@@ -28,6 +28,7 @@ There is **no lint script**. Always run `npm run typecheck` (and ideally `npm ru
   - `lib/controls.ts` — module singleton for the pointer-lock request function (set by `Ship`, called by `HUD`).
   - `lib/scene.ts` — holds a ref to the active camera (used by the DOM `TargetIndicator`).
   - `lib/planetRegistry.ts` — `Map<id, {object, radius}>` of live planet world positions, updated by each `Planet`.
+- **Keep this file up to date:** when you change anything that alters a convention, file map entry, or "Where to change things" pointer, update `AGENTS.md` to match.
 - **Do not add code comments** unless asked.
 - Don't assume new libraries are installed — check `package.json` first. `@types/three` must stay in lockstep with the `three` version.
 
