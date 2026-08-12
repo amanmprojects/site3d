@@ -24,7 +24,6 @@ const keys = {
 const HOME = new THREE.Vector3(0, 90, 480)
 
 const _fwd = new THREE.Vector3()
-const _right = new THREE.Vector3()
 const _up = new THREE.Vector3(0, 1, 0)
 const _acc = new THREE.Vector3()
 const _tmp = new THREE.Vector3()
@@ -43,38 +42,14 @@ const FWD = new THREE.Vector3(0, 0, -1)
 const MODEL_SCALE = 0.42
 const MODEL_ROTATION: [number, number, number] = [0, Math.PI, 0]
 
-const clamp = (v: number, lo: number, hi: number) =>
-  Math.max(lo, Math.min(hi, v))
-
-function setThruster(mesh: THREE.Mesh | null, amt: number) {
-  if (!mesh) return
-  if (amt > 0.02) {
-    mesh.visible = true
-    const m = mesh.material as THREE.MeshBasicMaterial
-    m.opacity = amt * 0.85
-    const s = 0.7 + amt * 0.7
-    mesh.scale.set(s, s, 0.5 + amt * 1.5)
-  } else {
-    mesh.visible = false
-  }
-}
-
 export function Ship() {
   const { camera, gl } = useThree()
   const shipRef = useRef<THREE.Group>(null)
   const modelRef = useRef<THREE.Group>(null)
-  const flameRef = useRef<THREE.Group>(null)
-  const flameOuterRef = useRef<THREE.Mesh>(null)
-  const flameInnerRef = useRef<THREE.Mesh>(null)
-  const rcsLRef = useRef<THREE.Mesh>(null)
-  const rcsRRef = useRef<THREE.Mesh>(null)
-  const rcsURef = useRef<THREE.Mesh>(null)
-  const rcsDRef = useRef<THREE.Mesh>(null)
 
   const vel = useRef(new THREE.Vector3())
   const euler = useRef(new THREE.Euler(-0.18, 0, 0, 'YXZ'))
-  const mouseVel = useRef(new THREE.Vector2())
-  const vis = useRef({ thrust: 0, l: 0, r: 0, u: 0, d: 0 })
+  const vis = useRef({ thrust: 0 })
   const animAction = useRef<THREE.AnimationAction | null>(null)
   const camPos = useRef(new THREE.Vector3())
   const camQuat = useRef(new THREE.Quaternion())
@@ -156,10 +131,6 @@ export function Ship() {
       euler.current.y -= e.movementX * 0.0022
       euler.current.x -= e.movementY * 0.0022
       euler.current.x = Math.max(-1.45, Math.min(1.45, euler.current.x))
-      mouseVel.current.set(
-        clamp(e.movementX * 0.03, -1, 1),
-        clamp(e.movementY * 0.03, -1, 1),
-      )
     }
 
     const onLockChange = () => {
@@ -212,7 +183,6 @@ export function Ship() {
       }
     } else if (locked) {
       _fwd.set(0, 0, -1).applyQuaternion(ship.quaternion)
-      _right.set(1, 0, 0).applyQuaternion(ship.quaternion)
 
       const accel = keys.boost ? 390 : 135
       const maxSpeed = keys.boost ? 780 : 270
@@ -220,8 +190,6 @@ export function Ship() {
       _acc.set(0, 0, 0)
       if (keys.fwd) _acc.addScaledVector(_fwd, accel)
       if (keys.back) _acc.addScaledVector(_fwd, -accel * 0.7)
-      if (keys.right) _acc.addScaledVector(_right, accel * 0.9)
-      if (keys.left) _acc.addScaledVector(_right, -accel * 0.9)
       if (keys.up) _acc.addScaledVector(_up, accel * 0.9)
       if (keys.down) _acc.addScaledVector(_up, -accel * 0.9)
 
@@ -230,6 +198,11 @@ export function Ship() {
       if (keys.rollR) rollInput -= 1
       euler.current.z += rollInput * 1.2 * delta
       euler.current.z *= Math.exp(-3 * delta)
+
+      let yawInput = 0
+      if (keys.right) yawInput += 1
+      if (keys.left) yawInput -= 1
+      euler.current.y -= yawInput * 1.6 * delta
 
       vel.current.addScaledVector(_acc, delta)
       vel.current.multiplyScalar(Math.exp(-0.6 * delta))
@@ -247,59 +220,6 @@ export function Ship() {
     if (animAction.current) {
       animAction.current.timeScale = 0.25 + v.thrust * 1.75
     }
-
-    const strafe = (keys.right ? 1 : 0) - (keys.left ? 1 : 0)
-    const vert = (keys.up ? 1 : 0) - (keys.down ? 1 : 0)
-    const roll = (keys.rollR ? 1 : 0) - (keys.rollL ? 1 : 0)
-    const yaw = mouseVel.current.x
-    const pitch = mouseVel.current.y
-
-    const lTarget = clamp(
-      Math.max(0, strafe) + Math.max(0, roll) + Math.max(0, yaw),
-      0,
-      1,
-    )
-    const rTarget = clamp(
-      Math.max(0, -strafe) + Math.max(0, -roll) + Math.max(0, -yaw),
-      0,
-      1,
-    )
-    const uTarget = clamp(
-      Math.max(0, -vert) + Math.max(0, pitch),
-      0,
-      1,
-    )
-    const dTarget = clamp(
-      Math.max(0, vert) + Math.max(0, -pitch),
-      0,
-      1,
-    )
-    v.l += (lTarget - v.l) * k
-    v.r += (rTarget - v.r) * k
-    v.u += (uTarget - v.u) * k
-    v.d += (dTarget - v.d) * k
-    mouseVel.current.multiplyScalar(Math.exp(-8 * delta))
-
-    if (flameRef.current) {
-      if (v.thrust > 0.03) {
-        flameRef.current.visible = true
-        flameRef.current.scale.set(1, 1, 0.4 + v.thrust * 1.9)
-        if (flameOuterRef.current)
-          (
-            flameOuterRef.current.material as THREE.MeshBasicMaterial
-          ).opacity = 0.25 + v.thrust * 0.55
-        if (flameInnerRef.current)
-          (
-            flameInnerRef.current.material as THREE.MeshBasicMaterial
-          ).opacity = 0.5 + v.thrust * 0.5
-      } else {
-        flameRef.current.visible = false
-      }
-    }
-    setThruster(rcsLRef.current, v.l)
-    setThruster(rcsRRef.current, v.r)
-    setThruster(rcsURef.current, v.u)
-    setThruster(rcsDRef.current, v.d)
 
     // ---- chase camera ----
     _shipPos.copy(ship.position)
@@ -326,68 +246,6 @@ export function Ship() {
       <group ref={modelRef} rotation={MODEL_ROTATION} scale={MODEL_SCALE}>
         <primitive object={scene} />
       </group>
-
-      {/* engine flame */}
-      <group ref={flameRef} position={[0, 0.1, 2.6]} visible={false}>
-        <mesh ref={flameOuterRef} rotation={[Math.PI / 2, 0, 0]}>
-          <coneGeometry args={[0.3, 1.8, 12, 1, true]} />
-          <meshBasicMaterial
-            color="#ff7a1a"
-            transparent
-            opacity={0.5}
-            blending={THREE.AdditiveBlending}
-            depthWrite={false}
-          />
-        </mesh>
-        <mesh ref={flameInnerRef} rotation={[Math.PI / 2, 0, 0]}>
-          <coneGeometry args={[0.15, 1.2, 12, 1, true]} />
-          <meshBasicMaterial
-            color="#fff0c0"
-            transparent
-            opacity={0.8}
-            blending={THREE.AdditiveBlending}
-            depthWrite={false}
-          />
-        </mesh>
-      </group>
-
-      {/* RCS thrusters */}
-      <mesh ref={rcsRRef} position={[1.5, 0.2, 0.5]} rotation={[0, 0, -Math.PI / 2]} visible={false}>
-        <coneGeometry args={[0.1, 0.5, 8, 1, true]} />
-        <meshBasicMaterial
-          color="#7fd8ff"
-          transparent
-          blending={THREE.AdditiveBlending}
-          depthWrite={false}
-        />
-      </mesh>
-      <mesh ref={rcsLRef} position={[-1.5, 0.2, 0.5]} rotation={[0, 0, Math.PI / 2]} visible={false}>
-        <coneGeometry args={[0.1, 0.5, 8, 1, true]} />
-        <meshBasicMaterial
-          color="#7fd8ff"
-          transparent
-          blending={THREE.AdditiveBlending}
-          depthWrite={false}
-        />
-      </mesh>
-      <mesh ref={rcsURef} position={[0, 0.9, 0.5]} visible={false}>
-        <coneGeometry args={[0.1, 0.5, 8, 1, true]} />
-        <meshBasicMaterial
-          color="#7fd8ff"
-          transparent
-          blending={THREE.AdditiveBlending}
-          depthWrite={false}
-        />
-      </mesh>
-      <mesh ref={rcsDRef} position={[0, -0.9, 0.5]} rotation={[0, 0, Math.PI]} visible={false}>
-        <coneGeometry args={[0.1, 0.5, 8, 1, true]} />
-        <meshBasicMaterial
-          color="#7fd8ff"
-          transparent
-          blending={THREE.AdditiveBlending}
-          depthWrite={false}
-        />
-      </mesh>
 
       {/* self-fill light so the ship reads in any sun angle */}
       <pointLight intensity={6} distance={30} decay={2} color="#cfe8ff" position={[0, 1, 4]} />

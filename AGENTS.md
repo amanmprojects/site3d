@@ -38,7 +38,7 @@ There is **no lint script**. Always run `npm run typecheck` (and ideally `npm ru
 |------|---------|
 | `app/page.tsx` | Entry; mounts `Experience` (dynamic, ssr:false) + `HUD` |
 | `components/Experience.tsx` | `<Canvas>` setup (camera, dpr, lights) + scene composition |
-| `components/Ship.tsx` | Ship (loads GLB model via `useGLTF` + `useAnimations`) + flight controls + chase camera + thruster visuals |
+| `components/Ship.tsx` | Ship (loads GLB model via `useGLTF` + `useAnimations`) + flight controls + chase camera |
 | `components/SolarSystem.tsx` | Star + planets + orbit lines; proximity detection → store |
 | `components/Planet.tsx` | One planet: procedural geometry, atmosphere, rings, Html label |
 | `components/Star.tsx` | Central star (emissive core, atmosphere shells, point light) |
@@ -58,11 +58,11 @@ There is **no lint script**. Always run `npm run typecheck` (and ideally `npm ru
 
 - **Projects / content / planet look:** `lib/planets.ts` (add/edit entries in the `THEMES` array — id, name, description, link, tags, palette, rings). Orbit/radius/speed/phase are computed automatically per index.
 - **Flight feel:** `components/Ship.tsx` — `CHASE_OFFSET` (camera distance/height), `HOME`, `accel`, `maxSpeed`, damping, mouse sensitivity (`e.movementX * 0.0022`).
-- **Ship model:** `public/ship/ship.glb` (swap the file to change the model). Orientation/scale via `MODEL_ROTATION` + `MODEL_SCALE` in `components/Ship.tsx`; engine flame / RCS thruster positions are there too. Animation speed scales with thrust (`0.25 + v.thrust * 1.75`).
+- **Ship model:** `public/ship/ship.glb` (swap the file to change the model). Orientation/scale via `MODEL_ROTATION` + `MODEL_SCALE` in `components/Ship.tsx`. Animation speed scales with thrust (`0.25 + v.thrust * 1.75`).
 - **Info popup trigger distance:** `components/SolarSystem.tsx` (`p.radius * 6 + 12`).
 - **Lighting / bloom:** `components/Star.tsx` (point light) and `components/Effects.tsx` (`luminanceThreshold`, `intensity`).
 - **HUD styling:** Tailwind classes in `components/HUD.tsx` + custom classes in `app/globals.css`.
 
 ## Controls (for reference)
 
-WASD fly · mouse steer (pointer-locked) · Q/E roll · Space/Ctrl up/down · Shift boost · R reset · Esc release cursor · Enter opens the targeted project link.
+W/S thrust · A/D yaw · mouse steer (pointer-locked) · Q/E roll · Space/Ctrl up/down · Shift boost · R reset · Esc release cursor · Enter opens the targeted project link.
