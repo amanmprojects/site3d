@@ -166,7 +166,7 @@ const THEMES: Theme[] = [
 ]
 
 export const PLANETS: PlanetDef[] = THEMES.map((t, i) => {
-  const orbit = 36 + i * 11
+  const orbit = (36 + i * 11) * 3
   const radius = 1.5 + (i % 4) * 0.55
   const speed = 0.5 / Math.sqrt(orbit)
   const rng = mulberry32(1000 + i * 37)

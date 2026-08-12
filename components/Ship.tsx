@@ -21,7 +21,7 @@ const keys = {
   boost: false,
 }
 
-const HOME = new THREE.Vector3(0, 30, 160)
+const HOME = new THREE.Vector3(0, 90, 480)
 
 const _fwd = new THREE.Vector3()
 const _right = new THREE.Vector3()
@@ -214,8 +214,8 @@ export function Ship() {
       _fwd.set(0, 0, -1).applyQuaternion(ship.quaternion)
       _right.set(1, 0, 0).applyQuaternion(ship.quaternion)
 
-      const accel = keys.boost ? 130 : 45
-      const maxSpeed = keys.boost ? 260 : 90
+      const accel = keys.boost ? 390 : 135
+      const maxSpeed = keys.boost ? 780 : 270
 
       _acc.set(0, 0, 0)
       if (keys.fwd) _acc.addScaledVector(_fwd, accel)
