@@ -37,7 +37,7 @@ There is **no lint script**. Always run `npm run typecheck` (and ideally `npm ru
 |------|---------|
 | `app/page.tsx` | Entry; mounts `Experience` (dynamic, ssr:false) + `HUD` |
 | `components/Experience.tsx` | `<Canvas>` setup (camera, dpr, lights) + scene composition |
-| `components/Ship.tsx` | Spaceship model + flight controls + chase camera + thruster visuals |
+| `components/Ship.tsx` | Ship (loads GLB model via `useGLTF` + `useAnimations`) + flight controls + chase camera + thruster visuals |
 | `components/SolarSystem.tsx` | Star + planets + orbit lines; proximity detection → store |
 | `components/Planet.tsx` | One planet: procedural geometry, atmosphere, rings, Html label |
 | `components/Star.tsx` | Central star (emissive core, atmosphere shells, point light) |
@@ -50,13 +50,14 @@ There is **no lint script**. Always run `npm run typecheck` (and ideally `npm ru
 | `lib/noise.ts` | Seeded PRNG (`mulberry32`) + fbm noise helper |
 | `lib/store.ts`, `lib/controls.ts`, `lib/scene.ts`, `lib/planetRegistry.ts` | Client state plumbing (see above) |
 | `public/sky/` | HDRI sky texture (`NightSkyHDRI008_8K.jpg`, ~22MB) |
+| `public/ship/ship.glb` | Animated ship model (multi-universe space ship, ~21MB) |
 | `my-info.md` | Content source (bio, socials, project list) |
 
 ## Where to change things
 
 - **Projects / content / planet look:** `lib/planets.ts` (add/edit entries in the `THEMES` array — id, name, description, link, tags, palette, rings). Orbit/radius/speed/phase are computed automatically per index.
 - **Flight feel:** `components/Ship.tsx` — `CHASE_OFFSET` (camera distance/height), `HOME`, `accel`, `maxSpeed`, damping, mouse sensitivity (`e.movementX * 0.0022`).
-- **Ship model:** the JSX meshes at the bottom of `components/Ship.tsx`.
+- **Ship model:** `public/ship/ship.glb` (swap the file to change the model). Orientation/scale via `MODEL_ROTATION` + `MODEL_SCALE` in `components/Ship.tsx`; engine flame / RCS thruster positions are there too. Animation speed scales with thrust (`0.25 + v.thrust * 1.75`).
 - **Info popup trigger distance:** `components/SolarSystem.tsx` (`p.radius * 6 + 12`).
 - **Lighting / bloom:** `components/Star.tsx` (point light) and `components/Effects.tsx` (`luminanceThreshold`, `intensity`).
 - **HUD styling:** Tailwind classes in `components/HUD.tsx` + custom classes in `app/globals.css`.
