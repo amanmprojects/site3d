@@ -43,7 +43,7 @@ export function SolarSystem() {
       }
 
       const p = PLANETS.find((x) => x.id === nearestId)!
-      const inRange = nearestDist < p.radius * 6 + 12
+      const inRange = nearestDist < p.radius * 12 + 40
       const infoId = inRange ? nearestId : null
       if (lastInfo.current !== infoId) {
         lastInfo.current = infoId

@@ -2,33 +2,58 @@
 
 import { useEffect, useMemo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
-import { Html } from '@react-three/drei'
+import { Html, useGLTF } from '@react-three/drei'
 import * as THREE from 'three'
 import type { PlanetDef } from '@/lib/planets'
 import {
-  buildPlanetGeometry,
   createAtmosphereMaterial,
   createRingTexture,
 } from '@/lib/geometry'
 import { planetRegistry } from '@/lib/planetRegistry'
 import { useApp } from '@/lib/store'
 
+const MODEL_URL = '/planets/various_planets.glb'
+
 export function Planet({ planet }: { planet: PlanetDef }) {
   const revGroup = useRef<THREE.Group>(null)
-  const meshRef = useRef<THREE.Mesh>(null)
+  const spinGroup = useRef<THREE.Group>(null)
+  const cloudRefs = useRef<THREE.Group[]>([])
   const requestWarp = useApp((s) => s.requestWarp)
 
-  const geometry = useMemo(
-    () =>
-      buildPlanetGeometry({
-        seed: planet.seed,
-        radius: planet.radius,
-        segments: planet.type === 'gas' ? 96 : 72,
-        palette: planet.palette,
-        type: planet.type,
-      }),
-    [planet],
-  )
+  const { scene } = useGLTF(MODEL_URL)
+
+  const model = useMemo(() => {
+    const group = new THREE.Group()
+    const center = new THREE.Vector3()
+    const box = new THREE.Box3()
+    cloudRefs.current = []
+    for (const nodeName of planet.model) {
+      const src = scene.getObjectByName(nodeName) as THREE.Group | null
+      if (!src) continue
+      const clone = src.clone(true) as THREE.Group
+      clone.scale.setScalar(planet.radius)
+      clone.updateMatrixWorld(true)
+      box.setFromObject(clone).getCenter(center)
+      clone.position.sub(center)
+      group.add(clone)
+      const hasCloud = src.children.some((c) => {
+        const mesh = c as THREE.Mesh
+        const mat = Array.isArray(mesh.material)
+          ? mesh.material[0]
+          : mesh.material
+        return mesh.isMesh && mat?.transparent
+      })
+      if (hasCloud) cloudRefs.current.push(clone)
+    }
+    group.traverse((o) => {
+      if ((o as THREE.Mesh).isMesh) {
+        o.castShadow = false
+        o.receiveShadow = false
+        o.frustumCulled = true
+      }
+    })
+    return group
+  }, [scene, planet])
 
   const atmosphere = useMemo(
     () => createAtmosphereMaterial(planet.palette.atmosphere, 1.1),
@@ -65,24 +90,19 @@ export function Planet({ planet }: { planet: PlanetDef }) {
         Math.sin(a) * planet.orbit,
       )
     }
-    if (meshRef.current) {
-      meshRef.current.rotation.y += planet.spin * delta * 10
+    if (spinGroup.current) {
+      spinGroup.current.rotation.y += planet.spin * delta * 10
+    }
+    for (const cloud of cloudRefs.current) {
+      cloud.rotation.y += delta * 0.08
     }
   })
 
-  const emissive = planet.palette.emissive
-
   return (
     <group ref={revGroup}>
-      <mesh ref={meshRef} geometry={geometry}>
-        <meshStandardMaterial
-          vertexColors
-          roughness={0.9}
-          metalness={0.05}
-          emissive={emissive ?? '#000000'}
-          emissiveIntensity={emissive ? 0.35 : 0}
-        />
-      </mesh>
+      <group ref={spinGroup}>
+        <primitive object={model} />
+      </group>
 
       <mesh scale={1.09}>
         <sphereGeometry args={[planet.radius, 32, 32]} />

@@ -2,11 +2,14 @@
 
 import { Suspense } from 'react'
 import { Canvas } from '@react-three/fiber'
+import { useGLTF } from '@react-three/drei'
 import { Ship } from './Ship'
 import { SolarSystem } from './SolarSystem'
 import { Starfield } from './Starfield'
 import { NightSky } from './NightSky'
 import { Effects } from './Effects'
+
+useGLTF.preload('/planets/various_planets.glb')
 
 export function Experience() {
   return (
