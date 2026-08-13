@@ -41,10 +41,10 @@ export function LoadingScreen() {
       </div>
 
       <div className="mono mt-9 text-center">
-        <div className="text-[10px] uppercase tracking-[0.5em] text-sky-300/60 hud-glow">
+        <div className="text-sm uppercase tracking-[0.5em] text-sky-300/60 hud-glow">
           Aman Mehtar · Orbital Portfolio
         </div>
-        <h1 className="mt-3 text-base uppercase tracking-[0.35em] text-sky-100/90">
+        <h1 className="mt-3 text-xl uppercase tracking-[0.35em] text-sky-100/90">
           Initializing navigation
         </h1>
       </div>
@@ -56,7 +56,7 @@ export function LoadingScreen() {
             style={{ width: `${Math.round(progress)}%` }}
           />
         </div>
-        <div className="mono mt-3 flex items-center justify-between gap-4 text-[10px] uppercase tracking-[0.3em] text-sky-300/60">
+        <div className="mono mt-3 flex items-center justify-between gap-4 text-xs uppercase tracking-[0.3em] text-sky-300/60">
           <span className="flex min-w-0 items-center gap-2">
             <span className="loading-pulse h-1.5 w-1.5 shrink-0 rounded-full bg-sky-300/80" />
             <span className="truncate">{label}</span>
@@ -66,7 +66,7 @@ export function LoadingScreen() {
           </span>
         </div>
         {errors.length > 0 && (
-          <div className="mono mt-4 text-[9px] uppercase tracking-widest text-amber-400/60">
+          <div className="mono mt-4 text-xs uppercase tracking-widest text-amber-400/60">
             {errors.length} asset{errors.length === 1 ? '' : 's'} failed to load
           </div>
         )}

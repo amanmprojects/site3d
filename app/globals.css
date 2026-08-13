@@ -19,12 +19,12 @@ body {
   background: #000;
   overflow: hidden;
   color: #e6f4ff;
-  font-family: "Hanken Grotesk", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-family: var(--font-sans), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 
 .mono {
-  font-family: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+  font-family: var(--font-mono), ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
 }
 
 .hud-glow {
@@ -48,14 +48,14 @@ body {
   cursor: pointer;
   white-space: nowrap;
   font-family: ui-monospace, Menlo, Consolas, monospace;
-  font-size: 10px;
+  font-size: 13px;
   letter-spacing: 0.22em;
   text-transform: uppercase;
   color: rgba(210, 235, 255, 0.9);
   text-shadow: 0 0 6px rgba(90, 170, 255, 0.8);
   background: rgba(8, 16, 30, 0.45);
   border: 1px solid rgba(120, 180, 255, 0.25);
-  padding: 3px 8px;
+  padding: 5px 12px;
   transition: all 0.15s ease;
 }
 

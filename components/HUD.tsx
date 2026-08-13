@@ -60,7 +60,7 @@ function TargetIndicator() {
         <div className="h-2 w-2 rotate-45 border border-amber-300/80 bg-amber-300/10" />
         <span
           ref={labelRef}
-          className="mono whitespace-nowrap text-[10px] uppercase tracking-[0.2em] text-amber-200/90 hud-glow"
+          className="mono whitespace-nowrap text-sm uppercase tracking-[0.2em] text-amber-200/90 hud-glow"
         />
       </div>
     </div>
@@ -83,19 +83,19 @@ function Intro({ onWarp }: { onWarp: (id: string) => void }) {
     <div className="pointer-events-auto absolute inset-0 z-30 flex flex-col items-center justify-between bg-black/60 backdrop-blur-[2px]">
       <div className="flex-1" />
       <div className="flex flex-col items-center px-6 text-center">
-        <div className="mono mb-3 text-[11px] uppercase tracking-[0.5em] text-sky-300/70 hud-glow">
+        <div className="mono mb-3 text-sm uppercase tracking-[0.5em] text-sky-300/70 hud-glow">
           Orbital Portfolio
         </div>
-        <h1 className="text-4xl font-semibold tracking-tight text-white md:text-6xl">
+        <h1 className="text-5xl font-semibold tracking-tight text-white md:text-7xl">
           Aman Mehtar
         </h1>
-        <p className="mt-3 max-w-md text-sm leading-relaxed text-sky-100/70">
+        <p className="mt-4 max-w-xl text-base leading-relaxed text-sky-100/70 md:text-lg">
           Engineering student in AI &amp; Data Science, building agents, tools and
           full-stack products. Every planet in this system is a project — fly close
           to scan it.
         </p>
 
-        <div className="mono mt-6 grid grid-cols-2 gap-x-6 gap-y-1 text-[11px] uppercase tracking-wider text-sky-200/60">
+        <div className="mono mt-6 grid grid-cols-2 gap-x-6 gap-y-1 text-sm uppercase tracking-wider text-sky-200/60">
           <span>W / S — thrust</span>
           <span>Mouse — steer</span>
           <span>A / D — strafe</span>
@@ -109,31 +109,31 @@ function Intro({ onWarp }: { onWarp: (id: string) => void }) {
         <button
           type="button"
           onClick={() => requestLock()}
-          className="mono panel corner mt-7 px-10 py-3 text-xs uppercase tracking-[0.35em] text-amber-200 transition hover:text-white hover:border-amber-300/60 hud-glow"
+          className="mono panel corner mt-7 px-10 py-3 text-sm uppercase tracking-[0.35em] text-amber-200 transition hover:text-white hover:border-amber-300/60 hud-glow"
         >
           Launch
         </button>
-        <div className="mono mt-3 text-[9px] uppercase tracking-[0.3em] text-sky-300/40">
+        <div className="mono mt-3 text-xs uppercase tracking-[0.3em] text-sky-300/40">
           or press space
         </div>
       </div>
 
       <div className="w-full max-w-5xl px-6 pb-8">
-        <div className="mono mb-3 text-center text-[10px] uppercase tracking-[0.4em] text-sky-300/50">
+        <div className="mono mb-3 text-center text-xs uppercase tracking-[0.4em] text-sky-300/50">
           Select a planet to autopilot
         </div>
-        <div className="grid max-h-[34vh] grid-cols-2 gap-2 overflow-y-auto md:grid-cols-3 lg:grid-cols-4">
+        <div className="grid max-h-[36vh] grid-cols-2 gap-2 overflow-y-auto md:grid-cols-3 lg:grid-cols-4">
           {PLANETS.map((p) => (
             <button
               key={p.id}
               type="button"
               onClick={() => onWarp(p.id)}
-              className="panel corner group flex flex-col items-start gap-1 px-3 py-2 text-left transition hover:border-amber-300/50"
+              className="panel corner group flex flex-col items-start gap-1 px-4 py-3 text-left transition hover:border-amber-300/50"
             >
-              <span className="mono text-[11px] uppercase tracking-widest text-sky-100 group-hover:text-amber-200">
+              <span className="mono text-sm uppercase tracking-widest text-sky-100 group-hover:text-amber-200">
                 {p.name}
               </span>
-              <span className="mono truncate text-[9px] uppercase tracking-wider text-sky-300/50">
+              <span className="mono truncate text-xs uppercase tracking-wider text-sky-300/50">
                 {p.tags[0] ?? p.type}
               </span>
             </button>
@@ -185,10 +185,10 @@ export function HUD() {
 
           {/* top-left identity + speed */}
           <div className="absolute left-5 top-5">
-            <div className="mono text-[10px] uppercase tracking-[0.4em] text-sky-300/60 hud-glow">
+            <div className="mono text-sm uppercase tracking-[0.4em] text-sky-300/60 hud-glow">
               Aman Mehtar
             </div>
-            <div className="mono mt-2 flex items-center gap-2 text-[11px] uppercase tracking-widest text-sky-100/80">
+            <div className="mono mt-2 flex items-center gap-2 text-sm uppercase tracking-widest text-sky-100/80">
               <span className="text-sky-300/50">vel</span>
               <span className="w-12 text-right">{speed}</span>
               <div className="h-1 w-20 overflow-hidden border border-sky-300/20 bg-sky-900/30">
@@ -201,7 +201,7 @@ export function HUD() {
           </div>
 
           {/* bottom-left hints */}
-          <div className="mono absolute bottom-5 left-5 text-[9px] uppercase leading-relaxed tracking-[0.3em] text-sky-300/40">
+          <div className="mono absolute bottom-5 left-5 text-xs uppercase leading-relaxed tracking-[0.3em] text-sky-300/40">
             W/A/S/D fly · mouse steer · Shift boost · R reset
             <br />
             Esc release · Enter open project
@@ -209,29 +209,29 @@ export function HUD() {
 
           {/* info popup */}
           {info && (
-            <div className="fade-in absolute bottom-8 left-1/2 w-[min(92vw,540px)] -translate-x-1/2">
+            <div className="fade-in absolute bottom-8 left-1/2 w-[min(92vw,640px)] -translate-x-1/2">
               <div className="panel corner px-6 py-5">
-                <div className="mono flex items-center justify-between text-[9px] uppercase tracking-[0.4em] text-amber-300/80">
+                <div className="mono flex items-center justify-between text-xs uppercase tracking-[0.4em] text-amber-300/80">
                   <span>Scanning — project locked</span>
                   <span className="text-sky-300/50">{speed}u · approach</span>
                 </div>
-                <h2 className="mt-2 text-2xl font-semibold text-white">
+                <h2 className="mt-2 text-3xl font-semibold text-white">
                   {info.name}
                 </h2>
                 <div className="mt-2 flex flex-wrap gap-1.5">
                   {info.tags.map((t) => (
                     <span
                       key={t}
-                      className="mono rounded-sm border border-sky-300/25 px-1.5 py-0.5 text-[9px] uppercase tracking-wider text-sky-200/80"
+                      className="mono rounded-sm border border-sky-300/25 px-1.5 py-0.5 text-xs uppercase tracking-wider text-sky-200/80"
                     >
                       {t}
                     </span>
                   ))}
                 </div>
-                <p className="mt-3 text-sm leading-relaxed text-sky-100/75">
+                <p className="mt-3 text-base leading-relaxed text-sky-100/75">
                   {info.description}
                 </p>
-                <div className="mono mt-4 flex items-center justify-between text-[10px] uppercase tracking-widest">
+                <div className="mono mt-4 flex items-center justify-between text-sm uppercase tracking-widest">
                   <span className="text-sky-300/50">{info.link.replace('https://', '')}</span>
                   <span className="text-amber-200/90 hud-glow">
                     Enter — open project
