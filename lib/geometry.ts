@@ -91,7 +91,7 @@ export function createStarfieldMaterial() {
         gl_Position = projectionMatrix * mvPosition;
         vColor = aColor;
         vTwinkle = aTwinkle * (0.55 + 0.45 * sin(uTime * (1.2 + aPhase * 1.8) + aPhase * 40.0));
-        vFade = 1.0 - smoothstep(1600.0, 4200.0, dist);
+        vFade = 1.0 - smoothstep(20000.0, 60000.0, dist);
       }
     `,
     fragmentShader: /* glsl */ `

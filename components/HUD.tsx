@@ -194,7 +194,7 @@ export function HUD() {
               <div className="h-1 w-20 overflow-hidden border border-sky-300/20 bg-sky-900/30">
                 <div
                   className="h-full bg-sky-300/80 transition-[width] duration-100"
-                  style={{ width: `${Math.min(100, (speed / 260) * 100)}%` }}
+                  style={{ width: `${Math.min(100, (speed / 780) * 100)}%` }}
                 />
               </div>
             </div>

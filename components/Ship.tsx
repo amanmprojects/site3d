@@ -21,7 +21,7 @@ const keys = {
   boost: false,
 }
 
-const HOME = new THREE.Vector3(0, 90, 480)
+const HOME = new THREE.Vector3(0, 260, 1350)
 
 const _fwd = new THREE.Vector3()
 const _acc = new THREE.Vector3()
@@ -36,6 +36,7 @@ const _q = new THREE.Quaternion()
 const CHASE_OFFSET = new THREE.Vector3(0, 1.2, 8)
 const CAM_LAG_K = 7
 const CHASE_LAG_MAX = 1
+const SURFACE_CLEARANCE = 9
 const LOOK_STICKINESS = 14
 const BANK_MAX = 0.2
 const BANK_RATE_FULL = 3.5
@@ -64,6 +65,7 @@ export function Ship() {
   const attPitch = useRef(0)
   const attRoll = useRef(0)
   const camQ = useRef(new THREE.Quaternion())
+  const shake = useRef(0)
 
   const setLocked = useApp((s) => s.setLocked)
   const setSpeed = useApp((s) => s.setSpeed)
@@ -123,6 +125,7 @@ export function Ship() {
             lastPitch.current = -0.18
             attPitch.current = 0
             attRoll.current = 0
+            shake.current = 0
           }
           break
         default:
@@ -196,7 +199,7 @@ export function Ship() {
         if (dist < holdDist + 2) {
           cancelWarp()
         } else {
-          const step = Math.min(dist, 160 * delta * 6)
+          const step = Math.min(dist, 450 * delta * 6)
           ship.position.addScaledVector(_toHold.normalize(), step)
           _target.copy(_tmp).sub(ship.position).normalize()
           _q.setFromUnitVectors(FWD, _target)
@@ -247,6 +250,24 @@ export function Ship() {
       ship.position.addScaledVector(vel.current, delta)
     }
 
+    // ---- planet collision: push out of the surface, bounce, shake ----
+    for (const entry of planetRegistry.values()) {
+      entry.object.getWorldPosition(_tmp)
+      _dir.copy(ship.position).sub(_tmp)
+      const dist = _dir.length()
+      const minDist = entry.radius + SURFACE_CLEARANCE
+      if (dist >= minDist || dist < 1e-4) continue
+      _dir.divideScalar(dist)
+      ship.position.copy(_tmp).addScaledVector(_dir, minDist)
+      const vn = vel.current.dot(_dir)
+      if (vn < 0) {
+        vel.current.addScaledVector(_dir, -vn * 1.35)
+        vel.current.multiplyScalar(0.86)
+      }
+      shake.current = Math.min(1.4, shake.current + Math.min(0.9, (minDist - dist) * 0.12))
+      if (warpTo) cancelWarp()
+    }
+
     // ---- thruster visuals ----
     const v = vis.current
     const k = 1 - Math.exp(-12 * delta)
@@ -257,9 +278,18 @@ export function Ship() {
     // ---- chase camera (rigidly anchored; slides back slightly under thrust) ----
     _fwd.set(0, 0, -1).applyQuaternion(ship.quaternion)
     camLag.current += ((v.thrust > 0.01 ? CHASE_LAG_MAX : 0) - camLag.current) * (1 - Math.exp(-6 * delta))
+    shake.current *= Math.exp(-4 * delta)
 
     _offset.copy(CHASE_OFFSET).applyQuaternion(ship.quaternion)
     _target.copy(ship.position).add(_offset).addScaledVector(_fwd, -camLag.current)
+    if (shake.current > 0.003) {
+      _tmp.set(
+        (Math.random() - 0.5) * 2,
+        (Math.random() - 0.5) * 2,
+        (Math.random() - 0.5) * 2,
+      )
+      _target.addScaledVector(_tmp, shake.current * 0.7)
+    }
 
     camera.position.copy(_target)
     camQ.current.slerp(ship.quaternion, 1 - Math.exp(-CAM_LAG_K * delta))
@@ -269,7 +299,7 @@ export function Ship() {
   })
 
   return (
-    <group ref={shipRef} position={[0, 30, 160]}>
+    <group ref={shipRef} position={[0, 260, 1350]}>
       <group ref={modelRef} rotation={MODEL_ROTATION} scale={MODEL_SCALE}>
         <primitive object={scene} />
       </group>

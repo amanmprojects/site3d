@@ -140,7 +140,7 @@ export function Planet({ planet }: { planet: PlanetDef }) {
       <Html
         position={[0, planet.radius + 1.6, 0]}
         center
-        distanceFactor={18}
+        distanceFactor={planet.radius * 6.5}
         zIndexRange={[20, 0]}
       >
         <button

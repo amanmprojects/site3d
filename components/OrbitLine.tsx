@@ -17,9 +17,9 @@ export function OrbitLine({ radius }: { radius: number }) {
   return (
     <Line
       points={points}
-      color="#5b7fff"
+      color="#e6ecff"
       transparent
-      opacity={0.22}
+      opacity={0.07}
       lineWidth={1}
     />
   )
