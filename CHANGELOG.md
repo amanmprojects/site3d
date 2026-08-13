@@ -4,6 +4,7 @@ All notable changes to this project are documented in this file.
 
 ## [Unreleased]
 
+- Starfield is now actual scattered star particles in world space (replaces the drei `<Stars>` shell): a dense 3D volume of 14,000 stars in a 1600-unit cube around the solar system plus a far shell of 6,000 stars (900–2400 units out) for depth — flying through them gives real traversal parallax. Custom shader (`createStarfieldMaterial` in `lib/geometry.ts`) drives per-star size, colour (white/warm/blue tinted), and a soft twinkle; field is deterministically seeded via `mulberry32`, so the sky is identical on every load.
 - Ship hull now visibly leans into steering: the nose pitches up/down and the hull banks left/right in proportion to how fast you're pitching/yawing (attitude is cosmetic, applied to the model only — the camera doesn't follow it), so the ship looks like it's physically turning instead of snapping direction (`ATT_PITCH_MAX` / `ATT_ROLL_MAX` / `ATT_RATE_FULL` in `Ship.tsx`).
 - Chase camera is now fixed to the centre of the ship's back (`CHASE_OFFSET`) and its orientation lags slightly behind the ship's pitch/yaw/roll (`CAM_LAG_K` in `Ship.tsx`), so on sharp turns you briefly see the top/side of the ship instead of it feeling like a 2D image pasted on the viewport. Camera snaps during warp.
 - Ship no longer plays the baked fly-around animation from `ship.glb` (it tumbled/rotated the hull on loop); the model now stays at its authored rest pose and only the flight controls move it.

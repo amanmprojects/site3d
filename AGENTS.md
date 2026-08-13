@@ -47,7 +47,7 @@ When you make a meaningful change to the codebase, add an entry under `[Unreleas
 | `components/Planet.tsx` | One planet: clones the assigned node(s) from `various_planets.glb`, atmosphere glow, optional rings, Html label |
 | `components/Star.tsx` | Central sun (animated GLB `stroming_sun.glb` + radial-gradient glow sprite + point light) |
 | `components/NightSky.tsx` | Background skybox (HDRI equirect texture, slowly rotating) |
-| `components/Starfield.tsx` | Near-field parallax stars (drei `<Stars>`) |
+| `components/Starfield.tsx` | Scattered star particles: a dense 3D volume (14k stars in a 1600-unit cube) you fly through + a far spherical shell (6k stars, 900–2400 units) for depth; custom shader per-star size/color/twinkle |
 | `components/Effects.tsx` | Postprocessing (Bloom, Vignette, Noise) |
 | `components/HUD.tsx` | All DOM UI: intro/launch screen, crosshair, target indicator, info popup |
 | `components/LoadingScreen.tsx` | Boot/loading overlay (z-40, covers Intro): shows asset load progress via drei `useProgress`, fades out when done |
