@@ -7,9 +7,9 @@ export function Effects() {
   return (
     <EffectComposer multisampling={4}>
       <Bloom
-        intensity={1.1}
+        intensity={1.25}
         luminanceThreshold={0.85}
-        luminanceSmoothing={0.2}
+        luminanceSmoothing={0.35}
         mipmapBlur
       />
       <Vignette offset={0.35} darkness={0.85} />

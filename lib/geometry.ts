@@ -24,8 +24,11 @@ export function createAtmosphereMaterial(color: string, intensity: number) {
       varying vec3 vViewPosition;
       void main() {
         vec3 viewDir = normalize(vViewPosition);
-        float fresnel = pow(1.0 - abs(dot(viewDir, normalize(vNormal))), 2.5);
-        gl_FragColor = vec4(uColor, 1.0) * fresnel * uIntensity;
+        float fres = 1.0 - abs(dot(viewDir, normalize(vNormal)));
+        float core = pow(fres, 3.0) * uIntensity;
+        float glow = pow(fres, 1.5) * uIntensity * 0.6;
+        float haze = pow(fres, 0.6) * uIntensity * 0.3;
+        gl_FragColor = vec4(uColor, 1.0) * (core + glow + haze);
       }
     `,
     transparent: true,

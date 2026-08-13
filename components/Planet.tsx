@@ -47,16 +47,30 @@ export function Planet({ planet }: { planet: PlanetDef }) {
     }
     group.traverse((o) => {
       if ((o as THREE.Mesh).isMesh) {
-        o.castShadow = false
-        o.receiveShadow = false
-        o.frustumCulled = true
+        const mesh = o as THREE.Mesh
+        mesh.castShadow = false
+        mesh.receiveShadow = false
+        mesh.frustumCulled = true
+        const glow = planet.palette.emissive ?? planet.palette.atmosphere
+        const mats = Array.isArray(mesh.material)
+          ? mesh.material
+          : [mesh.material]
+        mesh.material = mats.map((m) => {
+          const mat = m.clone()
+          if ((mat as THREE.MeshStandardMaterial).isMeshStandardMaterial) {
+            const std = mat as THREE.MeshStandardMaterial
+            std.emissive.set(glow)
+            std.emissiveIntensity = 0.3
+          }
+          return mat
+        })
       }
     })
     return group
   }, [scene, planet])
 
   const atmosphere = useMemo(
-    () => createAtmosphereMaterial(planet.palette.atmosphere, 1.1),
+    () => createAtmosphereMaterial(planet.palette.atmosphere, 1.6),
     [planet.palette.atmosphere],
   )
 
@@ -104,7 +118,7 @@ export function Planet({ planet }: { planet: PlanetDef }) {
         <primitive object={model} />
       </group>
 
-      <mesh scale={1.09}>
+      <mesh scale={1.45}>
         <sphereGeometry args={[planet.radius, 32, 32]} />
         <primitive object={atmosphere} attach="material" />
       </mesh>

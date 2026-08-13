@@ -42,7 +42,7 @@ When you make a meaningful change to the codebase, add an entry under `[Unreleas
 |------|---------|
 | `app/page.tsx` | Entry; mounts `Experience` (dynamic, ssr:false) + `HUD` |
 | `components/Experience.tsx` | `<Canvas>` setup (camera, dpr, lights) + scene composition |
-| `components/Ship.tsx` | Ship (loads GLB model via `useGLTF` + `useAnimations`) + flight controls + chase camera |
+| `components/Ship.tsx` | Ship (loads GLB model via `useGLTF`) + flight controls + chase camera |
 | `components/SolarSystem.tsx` | Star + planets + orbit lines; proximity detection → store |
 | `components/Planet.tsx` | One planet: clones the assigned node(s) from `various_planets.glb`, atmosphere glow, optional rings, Html label |
 | `components/Star.tsx` | Central sun (animated GLB `stroming_sun.glb` + radial-gradient glow sprite + point light) |
@@ -65,8 +65,8 @@ When you make a meaningful change to the codebase, add an entry under `[Unreleas
 ## Where to change things
 
 - **Projects / content / planet look:** `lib/planets.ts` (add/edit entries in the `THEMES` array — id, name, description, link, tags, palette, rings). The `model` array picks which node(s) from `public/planets/various_planets.glb` render as that planet (e.g. `['planet_lava_7']`, or `['planet_smac_0', 'planet_smac_cloud_1']` for body + cloud). Model unit radius is 1.0; `Planet.tsx` scales by `radius`. Available nodes: `planet_smac_0`/`planet_smac_cloud_1`, `planet_gas_2`/`planet_gas_cloud_01_3`, `planet_continental_4`/`planet_continental_clouds_5`, `planet_frozen_6`, `planet_lava_7`, `planet_barren_8`, `planet_gas_cloud_02_9`.
-- **Flight feel:** `components/Ship.tsx` — `CHASE_OFFSET` (camera distance/height), `CHASE_LAG_MAX` (thrust slide-back cap), `LOOK_STICKINESS` (pitch/yaw smoothing), `HOME`, `accel`, `maxSpeed`, damping, mouse sensitivity (`e.movementX * 0.0022`).
-- **Ship model:** `public/ship/ship.glb` (swap the file to change the model). Orientation/scale via `MODEL_ROTATION` + `MODEL_SCALE` in `components/Ship.tsx`. Animation speed scales with thrust (`0.25 + v.thrust * 1.75`).
+- **Flight feel:** `components/Ship.tsx` — `CHASE_OFFSET` (camera distance from ship center, y = height above the ship's center so the ship sits slightly low in frame), `CAM_LAG_K` (how quickly the camera orientation catches up to the ship's pitch/yaw; lower = more lag), `CHASE_LAG_MAX` (thrust slide-back cap), `LOOK_STICKINESS` (pitch/yaw smoothing), attitude lean constants (`ATT_PITCH_MAX`, `ATT_ROLL_MAX`, `ATT_RATE_FULL` — how far the hull pitches/banks into steering, cosmetic on the model only, camera doesn't follow), `HOME`, `accel`, `maxSpeed`, damping, mouse sensitivity (`e.movementX * 0.0022`).
+- **Ship model:** `public/ship/ship.glb` (swap the file to change the model). Orientation/scale via `MODEL_ROTATION` + `MODEL_SCALE` in `components/Ship.tsx`. The GLB's baked fly-around animation is not played (it tumbled the hull); the model rests at its authored pose.
 - **Info popup trigger distance:** `components/SolarSystem.tsx` (`p.radius * 6 + 12`).
 - **Lighting / bloom:** `components/Star.tsx` (point light) and `components/Effects.tsx` (`luminanceThreshold`, `intensity`).
 - **HUD styling:** Tailwind classes in `components/HUD.tsx` + custom classes in `app/globals.css`. Fonts are loaded in `app/layout.tsx` via `next/font` (`Space Grotesk` → `var(--font-sans)`, `JetBrains Mono` → `var(--font-mono)`).

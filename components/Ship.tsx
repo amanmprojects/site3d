@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
-import { useAnimations, useGLTF } from '@react-three/drei'
+import { useGLTF } from '@react-three/drei'
 import * as THREE from 'three'
 import { useApp } from '@/lib/store'
 import { setLockImpl } from '@/lib/controls'
@@ -33,9 +33,15 @@ const _target = new THREE.Vector3()
 const _offset = new THREE.Vector3()
 const _q = new THREE.Quaternion()
 
-const CHASE_OFFSET = new THREE.Vector3(0, 1.6, 8)
+const CHASE_OFFSET = new THREE.Vector3(0, 1.2, 8)
+const CAM_LAG_K = 7
 const CHASE_LAG_MAX = 1
 const LOOK_STICKINESS = 14
+const BANK_MAX = 0.2
+const BANK_RATE_FULL = 3.5
+const ATT_PITCH_MAX = 0.32
+const ATT_ROLL_MAX = 0.6
+const ATT_RATE_FULL = 3.5
 const FWD = new THREE.Vector3(0, 0, -1)
 
 const MODEL_SCALE = 0.42
@@ -50,30 +56,27 @@ export function Ship() {
   const euler = useRef(new THREE.Euler(-0.18, 0, 0, 'YXZ'))
   const look = useRef({ x: -0.18, y: 0 })
   const vis = useRef({ thrust: 0 })
-  const animAction = useRef<THREE.AnimationAction | null>(null)
   const camLag = useRef(0)
+  const roll = useRef(0)
+  const bank = useRef(0)
+  const lastYaw = useRef(0)
+  const lastPitch = useRef(0)
+  const attPitch = useRef(0)
+  const attRoll = useRef(0)
+  const camQ = useRef(new THREE.Quaternion())
 
   const setLocked = useApp((s) => s.setLocked)
   const setSpeed = useApp((s) => s.setSpeed)
   const warpTo = useApp((s) => s.warpTo)
   const cancelWarp = useApp((s) => s.cancelWarp)
 
-  const { scene, animations } = useGLTF('/ship/ship.glb')
-  const { actions } = useAnimations(animations, modelRef)
-
-  useEffect(() => {
-    const clip = animations[0]
-    if (!clip) return
-    const action = actions[clip.name]
-    if (action) {
-      animAction.current = action
-      action.reset().play()
-    }
-  }, [animations, actions])
+  const { scene } = useGLTF('/ship/ship.glb')
 
   useEffect(() => {
     sceneRef.camera = camera as THREE.PerspectiveCamera
     setLockImpl(() => gl.domElement.requestPointerLock())
+    camQ.current.copy(shipRef.current?.quaternion ?? new THREE.Quaternion())
+    lastPitch.current = euler.current.x
 
     const makeKeyHandler = (down: boolean) => (e: KeyboardEvent) => {
       switch (e.code) {
@@ -114,6 +117,12 @@ export function Ship() {
             euler.current.set(-0.18, 0, 0, 'YXZ')
             look.current.x = -0.18
             look.current.y = 0
+            roll.current = 0
+            bank.current = 0
+            lastYaw.current = 0
+            lastPitch.current = -0.18
+            attPitch.current = 0
+            attRoll.current = 0
           }
           break
         default:
@@ -156,7 +165,23 @@ export function Ship() {
     const lookK = 1 - Math.exp(-LOOK_STICKINESS * delta)
     euler.current.x += (look.current.x - euler.current.x) * lookK
     euler.current.y += (look.current.y - euler.current.y) * lookK
+
+    const yawVel = euler.current.y - lastYaw.current
+    lastYaw.current = euler.current.y
+    const pitchVel = euler.current.x - lastPitch.current
+    lastPitch.current = euler.current.x
+    const bankTarget = Math.sign(yawVel) * Math.min(1, Math.abs(yawVel) / (delta * BANK_RATE_FULL)) * BANK_MAX
+    const entering = Math.abs(bank.current) < Math.abs(bankTarget)
+    bank.current += (bankTarget - bank.current) * (1 - Math.exp(-(entering ? 10 : 5) * delta))
+    euler.current.z = roll.current + bank.current
+
+    const attPitchTarget = -THREE.MathUtils.clamp(pitchVel / (delta * ATT_RATE_FULL), -1, 1) * ATT_PITCH_MAX
+    const attRollTarget = -THREE.MathUtils.clamp(yawVel / (delta * ATT_RATE_FULL), -1, 1) * ATT_ROLL_MAX
+    attPitch.current += (attPitchTarget - attPitch.current) * (1 - Math.exp(-10 * delta))
+    const rollEntering = Math.abs(attRoll.current) < Math.abs(attRollTarget)
+    attRoll.current += (attRollTarget - attRoll.current) * (1 - Math.exp(-(rollEntering ? 9 : 5) * delta))
     ship.quaternion.setFromEuler(euler.current)
+    modelRef.current?.rotation.set(attPitch.current, MODEL_ROTATION[1], attRoll.current, 'YXZ')
 
     if (warpTo) {
       const entry = planetRegistry.get(warpTo)
@@ -179,6 +204,11 @@ export function Ship() {
           euler.current.setFromQuaternion(ship.quaternion, 'YXZ')
           look.current.x = euler.current.x
           look.current.y = euler.current.y
+          lastYaw.current = euler.current.y
+          lastPitch.current = euler.current.x
+          attPitch.current = 0
+          attRoll.current = 0
+          camQ.current.copy(ship.quaternion)
         }
       } else {
         cancelWarp()
@@ -198,8 +228,9 @@ export function Ship() {
       let rollInput = 0
       if (keys.rollL) rollInput += 1
       if (keys.rollR) rollInput -= 1
-      euler.current.z += rollInput * 1.2 * delta
-      euler.current.z *= Math.exp(-3 * delta)
+      roll.current += rollInput * 1.2 * delta
+      roll.current *= Math.exp(-3 * delta)
+      euler.current.z = roll.current + bank.current
 
       let yawInput = 0
       if (keys.right) yawInput += 1
@@ -223,10 +254,6 @@ export function Ship() {
     const thrustTarget = keys.fwd ? (keys.boost ? 1 : 0.75) : 0
     v.thrust += (thrustTarget - v.thrust) * k
 
-    if (animAction.current) {
-      animAction.current.timeScale = 0.25 + v.thrust * 1.75
-    }
-
     // ---- chase camera (rigidly anchored; slides back slightly under thrust) ----
     _fwd.set(0, 0, -1).applyQuaternion(ship.quaternion)
     camLag.current += ((v.thrust > 0.01 ? CHASE_LAG_MAX : 0) - camLag.current) * (1 - Math.exp(-6 * delta))
@@ -235,7 +262,8 @@ export function Ship() {
     _target.copy(ship.position).add(_offset).addScaledVector(_fwd, -camLag.current)
 
     camera.position.copy(_target)
-    camera.quaternion.copy(ship.quaternion)
+    camQ.current.slerp(ship.quaternion, 1 - Math.exp(-CAM_LAG_K * delta))
+    camera.quaternion.copy(camQ.current)
 
     setSpeed(Math.round(vel.current.length()))
   })
