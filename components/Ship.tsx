@@ -31,11 +31,11 @@ const _hold = new THREE.Vector3()
 const _toHold = new THREE.Vector3()
 const _target = new THREE.Vector3()
 const _offset = new THREE.Vector3()
-const _camPos = new THREE.Vector3()
-const _shipPos = new THREE.Vector3()
 const _q = new THREE.Quaternion()
 
 const CHASE_OFFSET = new THREE.Vector3(0, 1.6, 8)
+const CHASE_LAG_MAX = 1
+const LOOK_STICKINESS = 14
 const FWD = new THREE.Vector3(0, 0, -1)
 
 const MODEL_SCALE = 0.42
@@ -48,11 +48,10 @@ export function Ship() {
 
   const vel = useRef(new THREE.Vector3())
   const euler = useRef(new THREE.Euler(-0.18, 0, 0, 'YXZ'))
+  const look = useRef({ x: -0.18, y: 0 })
   const vis = useRef({ thrust: 0 })
   const animAction = useRef<THREE.AnimationAction | null>(null)
-  const camPos = useRef(new THREE.Vector3())
-  const camQuat = useRef(new THREE.Quaternion())
-  const camInit = useRef(false)
+  const camLag = useRef(0)
 
   const setLocked = useApp((s) => s.setLocked)
   const setSpeed = useApp((s) => s.setSpeed)
@@ -113,6 +112,8 @@ export function Ship() {
             shipRef.current?.position.copy(HOME)
             vel.current.set(0, 0, 0)
             euler.current.set(-0.18, 0, 0, 'YXZ')
+            look.current.x = -0.18
+            look.current.y = 0
           }
           break
         default:
@@ -124,9 +125,9 @@ export function Ship() {
 
     const onMove = (e: MouseEvent) => {
       if (document.pointerLockElement !== gl.domElement) return
-      euler.current.y -= e.movementX * 0.0022
-      euler.current.x -= e.movementY * 0.0022
-      euler.current.x = Math.max(-1.45, Math.min(1.45, euler.current.x))
+      look.current.y -= e.movementX * 0.0022
+      look.current.x -= e.movementY * 0.0022
+      look.current.x = Math.max(-1.45, Math.min(1.45, look.current.x))
     }
 
     const onLockChange = () => {
@@ -152,6 +153,9 @@ export function Ship() {
     const ship = shipRef.current
     if (!ship) return
 
+    const lookK = 1 - Math.exp(-LOOK_STICKINESS * delta)
+    euler.current.x += (look.current.x - euler.current.x) * lookK
+    euler.current.y += (look.current.y - euler.current.y) * lookK
     ship.quaternion.setFromEuler(euler.current)
 
     if (warpTo) {
@@ -173,6 +177,8 @@ export function Ship() {
           _q.setFromUnitVectors(FWD, _target)
           ship.quaternion.copy(_q)
           euler.current.setFromQuaternion(ship.quaternion, 'YXZ')
+          look.current.x = euler.current.x
+          look.current.y = euler.current.y
         }
       } else {
         cancelWarp()
@@ -185,8 +191,9 @@ export function Ship() {
 
       _acc.set(0, 0, 0)
       if (keys.fwd) _acc.addScaledVector(_fwd, accel)
-      if (keys.pitchUp) euler.current.x += 1.3 * delta
-      if (keys.pitchDown) euler.current.x -= 1.3 * delta
+      if (keys.pitchUp) look.current.x += 1.3 * delta
+      if (keys.pitchDown) look.current.x -= 1.3 * delta
+      look.current.x = Math.max(-1.45, Math.min(1.45, look.current.x))
 
       let rollInput = 0
       if (keys.rollL) rollInput += 1
@@ -197,7 +204,7 @@ export function Ship() {
       let yawInput = 0
       if (keys.right) yawInput += 1
       if (keys.left) yawInput -= 1
-      euler.current.y -= yawInput * 1.6 * delta
+      look.current.y -= yawInput * 1.6 * delta
 
       vel.current.addScaledVector(_acc, delta)
       if (keys.brake) {
@@ -220,22 +227,15 @@ export function Ship() {
       animAction.current.timeScale = 0.25 + v.thrust * 1.75
     }
 
-    // ---- chase camera ----
-    _shipPos.copy(ship.position)
+    // ---- chase camera (rigidly anchored; slides back slightly under thrust) ----
+    _fwd.set(0, 0, -1).applyQuaternion(ship.quaternion)
+    camLag.current += ((v.thrust > 0.01 ? CHASE_LAG_MAX : 0) - camLag.current) * (1 - Math.exp(-6 * delta))
+
     _offset.copy(CHASE_OFFSET).applyQuaternion(ship.quaternion)
-    _target.copy(_shipPos).add(_offset)
+    _target.copy(ship.position).add(_offset).addScaledVector(_fwd, -camLag.current)
 
-    if (!camInit.current) {
-      camPos.current.copy(_target)
-      camQuat.current.copy(ship.quaternion)
-      camInit.current = true
-    }
-
-    const stiff = warpTo ? 26 : 20
-    camPos.current.lerp(_target, 1 - Math.exp(-stiff * delta))
-    camQuat.current.slerp(ship.quaternion, 1 - Math.exp(-(stiff + 2) * delta))
-    camera.position.copy(camPos.current)
-    camera.quaternion.copy(camQuat.current)
+    camera.position.copy(_target)
+    camera.quaternion.copy(ship.quaternion)
 
     setSpeed(Math.round(vel.current.length()))
   })

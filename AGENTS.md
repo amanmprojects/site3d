@@ -65,11 +65,11 @@ When you make a meaningful change to the codebase, add an entry under `[Unreleas
 ## Where to change things
 
 - **Projects / content / planet look:** `lib/planets.ts` (add/edit entries in the `THEMES` array — id, name, description, link, tags, palette, rings). The `model` array picks which node(s) from `public/planets/various_planets.glb` render as that planet (e.g. `['planet_lava_7']`, or `['planet_smac_0', 'planet_smac_cloud_1']` for body + cloud). Model unit radius is 1.0; `Planet.tsx` scales by `radius`. Available nodes: `planet_smac_0`/`planet_smac_cloud_1`, `planet_gas_2`/`planet_gas_cloud_01_3`, `planet_continental_4`/`planet_continental_clouds_5`, `planet_frozen_6`, `planet_lava_7`, `planet_barren_8`, `planet_gas_cloud_02_9`.
-- **Flight feel:** `components/Ship.tsx` — `CHASE_OFFSET` (camera distance/height), `HOME`, `accel`, `maxSpeed`, damping, mouse sensitivity (`e.movementX * 0.0022`).
+- **Flight feel:** `components/Ship.tsx` — `CHASE_OFFSET` (camera distance/height), `CHASE_LAG_MAX` (thrust slide-back cap), `LOOK_STICKINESS` (pitch/yaw smoothing), `HOME`, `accel`, `maxSpeed`, damping, mouse sensitivity (`e.movementX * 0.0022`).
 - **Ship model:** `public/ship/ship.glb` (swap the file to change the model). Orientation/scale via `MODEL_ROTATION` + `MODEL_SCALE` in `components/Ship.tsx`. Animation speed scales with thrust (`0.25 + v.thrust * 1.75`).
 - **Info popup trigger distance:** `components/SolarSystem.tsx` (`p.radius * 6 + 12`).
 - **Lighting / bloom:** `components/Star.tsx` (point light) and `components/Effects.tsx` (`luminanceThreshold`, `intensity`).
-- **HUD styling:** Tailwind classes in `components/HUD.tsx` + custom classes in `app/globals.css`.
+- **HUD styling:** Tailwind classes in `components/HUD.tsx` + custom classes in `app/globals.css`. Fonts are loaded in `app/layout.tsx` via `next/font` (`Space Grotesk` → `var(--font-sans)`, `JetBrains Mono` → `var(--font-mono)`).
 
 ## Controls (for reference)
 
