@@ -19,6 +19,10 @@ npm run typecheck  # tsc --noEmit
 
 There is **no lint script**. Always run `npm run typecheck` (and ideally `npm run build`) after making changes. `tsconfig` is `strict: true`.
 
+## Changelog
+
+When you make a meaningful change to the codebase, add an entry under `[Unreleased]` in `CHANGELOG.md` (using the Keep a Changelog format). When a release is cut, move the unreleased entries into a new versioned section.
+
 ## Important conventions & gotchas
 
 - **All 3D code is client-only.** The `Experience` component (the `<Canvas>`) is dynamically imported with `ssr: false` in `app/page.tsx`. Any new R3F component must start with `'use client'`.
@@ -55,6 +59,7 @@ There is **no lint script**. Always run `npm run typecheck` (and ideally `npm ru
 | `public/planets/various_planets.glb` | All planet models in one file (~110MB, 7 planets + cloud layers; `useGLTF.preload` in `Experience.tsx`) |
 | `public/sun/stroming_sun.glb` | Animated sun model (layered rotating/scale-pulsing shells) |
 | `my-info.md` | Content source (bio, socials, project list) |
+| `CHANGELOG.md` | Log of notable changes (Keep a Changelog format) |
 
 ## Where to change things
 
@@ -67,4 +72,4 @@ There is **no lint script**. Always run `npm run typecheck` (and ideally `npm ru
 
 ## Controls (for reference)
 
-W/S pitch · A/D yaw · mouse steer (pointer-locked) · Q/E roll · Space thrust · Shift boost · R reset · Esc release cursor · Enter opens the targeted project link.
+W thrust · S brake · Up/Down pitch · A/D yaw · mouse steer (pointer-locked) · Q/E roll · Shift boost · R reset · Esc release cursor · Enter opens the targeted project link.
