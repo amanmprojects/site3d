@@ -46,6 +46,8 @@ const MAX_SPEED = 270
 const BOOST_MAX_SPEED = 1100
 const LOOK_STICKINESS = 14
 const STEER_RATE = 2.2
+const FIRE_FADE_IN = 12
+const FIRE_FADE_OUT = 10
 const BANK_MAX = 0.2
 const BANK_RATE_FULL = 3.5
 const ATT_PITCH_MAX = 0.32
@@ -85,21 +87,39 @@ export function Ship() {
 
   const { scene, animations } = useGLTF('/ship/ship.glb')
 
-  // booster fire: the Torus* flame stacks + Circle* nozzle glow discs
-  const fireNodes = useMemo(() => {
-    const nodes: THREE.Object3D[] = []
+  // booster fire: the green Circle* nozzle discs (burn in normal thrust) and
+  // the Torus* flame rings (only at full power: boost or warp)
+  const { fireCones, fireConeMats, fireDiscs, fireDiscMats } = useMemo(() => {
+    const cones: THREE.Object3D[] = []
+    const discs: THREE.Object3D[] = []
+    const coneMats = new Set<THREE.Material>()
+    const discMats = new Set<THREE.Material>()
+    const collect = (node: THREE.Object3D, list: THREE.Object3D[], mats: Set<THREE.Material>) => {
+      list.push(node)
+      node.visible = false
+      node.traverse((o) => {
+        if (!(o as THREE.Mesh).isMesh) return
+        const mesh = o as THREE.Mesh
+        const ms = Array.isArray(mesh.material) ? mesh.material : [mesh.material]
+        for (const m of ms) {
+          if (!m) continue
+          m.transparent = true
+          mats.add(m)
+        }
+      })
+    }
     scene.traverse((o) => {
-      if (/^(Torus|Circle)/.test(o.name)) {
-        nodes.push(o)
-        o.visible = false
-      }
+      if (/^Torus/.test(o.name)) collect(o, cones, coneMats)
+      else if (/^Circle/.test(o.name)) collect(o, discs, discMats)
     })
-    return nodes
+    return { fireCones: cones, fireConeMats: coneMats, fireDiscs: discs, fireDiscMats: discMats }
   }, [scene])
 
   const mixer = useRef<THREE.AnimationMixer | null>(null)
   const fireAction = useRef<THREE.AnimationAction | null>(null)
-  const fireVisible = useRef(false)
+  const fireShown = useRef(false)
+  const coneOpacity = useRef(0)
+  const discOpacity = useRef(0)
 
   useEffect(() => {
     if (!animations.length) return
@@ -396,13 +416,23 @@ export function Ship() {
     const thrustTarget = keys.fwd ? (keys.boost ? 1 : 0.75) : 0
     v.thrust += (thrustTarget - v.thrust) * k
 
-    // booster fire: only while thrusting (or warping); paused flicker when off
-    const fireOn = keys.fwd || !!warpTo
-    if (fireOn !== fireVisible.current) {
-      fireVisible.current = fireOn
-      for (const n of fireNodes) n.visible = fireOn
-      if (fireAction.current) fireAction.current.paused = !fireOn
+    // booster fire: green discs burn with thrust, flame rings only at full
+    // power (boost/warp); each fades separately, flicker pauses when all off
+    const discTarget = keys.fwd || !!warpTo ? 1 : 0
+    const coneTarget = (keys.fwd && keys.boost) || !!warpTo ? 1 : 0
+    const dk = 1 - Math.exp(-(discTarget > discOpacity.current ? FIRE_FADE_IN : FIRE_FADE_OUT) * delta)
+    const ck = 1 - Math.exp(-(coneTarget > coneOpacity.current ? FIRE_FADE_IN : FIRE_FADE_OUT) * delta)
+    discOpacity.current += (discTarget - discOpacity.current) * dk
+    coneOpacity.current += (coneTarget - coneOpacity.current) * ck
+    const anyShown = discOpacity.current > 0.01 || coneOpacity.current > 0.01
+    if (anyShown !== fireShown.current) {
+      fireShown.current = anyShown
+      if (fireAction.current) fireAction.current.paused = !anyShown
     }
+    for (const n of fireDiscs) n.visible = discOpacity.current > 0.01
+    for (const n of fireCones) n.visible = coneOpacity.current > 0.01
+    for (const m of fireDiscMats) m.opacity = discOpacity.current
+    for (const m of fireConeMats) m.opacity = coneOpacity.current
 
     // ---- chase camera (rigidly anchored; slides back slightly under thrust) ----
     _fwd.set(0, 0, -1).applyQuaternion(ship.quaternion)
