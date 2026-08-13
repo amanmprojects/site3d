@@ -69,7 +69,7 @@ export function Star() {
           toneMapped={false}
         />
       </sprite>
-      <pointLight color="#fff0d0" intensity={3} decay={0} />
+      <pointLight color="#fff0d0" intensity={3.5} decay={0} />
     </group>
   )
 }
