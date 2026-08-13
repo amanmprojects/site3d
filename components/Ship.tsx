@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
 import { useGLTF } from '@react-three/drei'
 import * as THREE from 'three'
@@ -83,7 +83,44 @@ export function Ship() {
   const warpTo = useApp((s) => s.warpTo)
   const cancelWarp = useApp((s) => s.cancelWarp)
 
-  const { scene } = useGLTF('/ship/ship.glb')
+  const { scene, animations } = useGLTF('/ship/ship.glb')
+
+  // booster fire: the Torus* flame stacks + Circle* nozzle glow discs
+  const fireNodes = useMemo(() => {
+    const nodes: THREE.Object3D[] = []
+    scene.traverse((o) => {
+      if (/^(Torus|Circle)/.test(o.name)) {
+        nodes.push(o)
+        o.visible = false
+      }
+    })
+    return nodes
+  }, [scene])
+
+  const mixer = useRef<THREE.AnimationMixer | null>(null)
+  const fireAction = useRef<THREE.AnimationAction | null>(null)
+  const fireVisible = useRef(false)
+
+  useEffect(() => {
+    if (!animations.length) return
+    // play only the fire flicker tracks (torus/circle scale pulse + flame
+    // morphs); everything else in this clip is roll motion baked into the fire
+    // nodes too (180 deg flips around the ship's long axis) or the root roll
+    const clip = animations[0]
+    const fireClip = new THREE.AnimationClip(
+      'fire',
+      clip.duration,
+      clip.tracks.filter((t) => /\.(scale|morphTargetInfluences)$/.test(t.name)),
+    )
+    const m = new THREE.AnimationMixer(scene)
+    const action = m.clipAction(fireClip)
+    action.play()
+    mixer.current = m
+    fireAction.current = action
+    return () => {
+      m.stopAllAction()
+    }
+  }, [animations, scene])
 
   useEffect(() => {
     sceneRef.camera = camera as THREE.PerspectiveCamera
@@ -225,6 +262,8 @@ export function Ship() {
     const ship = shipRef.current
     if (!ship) return
 
+    mixer.current?.update(delta)
+
     const lookK = 1 - Math.exp(-LOOK_STICKINESS * delta)
     euler.current.x += (look.current.x - euler.current.x) * lookK
     euler.current.y += (look.current.y - euler.current.y) * lookK
@@ -356,6 +395,14 @@ export function Ship() {
 
     const thrustTarget = keys.fwd ? (keys.boost ? 1 : 0.75) : 0
     v.thrust += (thrustTarget - v.thrust) * k
+
+    // booster fire: only while thrusting (or warping); paused flicker when off
+    const fireOn = keys.fwd || !!warpTo
+    if (fireOn !== fireVisible.current) {
+      fireVisible.current = fireOn
+      for (const n of fireNodes) n.visible = fireOn
+      if (fireAction.current) fireAction.current.paused = !fireOn
+    }
 
     // ---- chase camera (rigidly anchored; slides back slightly under thrust) ----
     _fwd.set(0, 0, -1).applyQuaternion(ship.quaternion)

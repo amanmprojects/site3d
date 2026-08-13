@@ -28,9 +28,9 @@ export function Effects() {
         luminanceSmoothing={0.35}
         mipmapBlur
       />
-      <Vignette offset={0.35} darkness={0.85} />
       <Noise premultiply blendFunction={BlendFunction.ADD} opacity={0.04} />
       <WarpBlur ref={blurRef} />
+      <Vignette offset={0.35} darkness={0.85} />
     </EffectComposer>
   )
 }
