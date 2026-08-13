@@ -18,7 +18,7 @@ export function NightSky() {
 
   return (
     <mesh ref={ref} renderOrder={-10} frustumCulled={false}>
-      <sphereGeometry args={[45000, 64, 64]} />
+      <sphereGeometry args={[180000, 64, 64]} />
       <meshBasicMaterial map={texture} side={THREE.BackSide} depthWrite={false} toneMapped={false} />
     </mesh>
   )

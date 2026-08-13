@@ -17,7 +17,7 @@ useTexture.preload('/sky/NightSkyHDRI008_8K.jpg')
 export function Experience() {
   return (
     <Canvas
-      camera={{ position: [0, 90, 480], fov: 60, near: 0.1, far: 60000 }}
+      camera={{ position: [0, 90, 480], fov: 60, near: 0.1, far: 240000 }}
       dpr={[1, 2]}
       gl={{ antialias: true, powerPreference: 'high-performance' }}
       style={{ position: 'fixed', inset: 0 }}

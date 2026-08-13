@@ -22,7 +22,7 @@ const keys = {
   boost: false,
 }
 
-const HOME = new THREE.Vector3(0, 260, 1350)
+const HOME = new THREE.Vector3(0, 260, 5400)
 
 const _fwd = new THREE.Vector3()
 const _acc = new THREE.Vector3()
@@ -38,6 +38,11 @@ const CHASE_OFFSET = new THREE.Vector3(0, 1.2, 8)
 const CAM_LAG_K = 7
 const CHASE_LAG_MAX = 1
 const SURFACE_CLEARANCE = 9
+const ACCEL = 400
+const BOOST_ACCEL = 1000
+const BRAKE_ACCEL = 800
+const MAX_SPEED = 270
+const BOOST_MAX_SPEED = 1100
 const LOOK_STICKINESS = 14
 const BANK_MAX = 0.2
 const BANK_RATE_FULL = 3.5
@@ -222,11 +227,6 @@ export function Ship() {
     } else if (locked) {
       _fwd.set(0, 0, -1).applyQuaternion(ship.quaternion)
 
-      const accel = keys.boost ? 390 : 135
-      const maxSpeed = keys.boost ? 780 : 270
-
-      _acc.set(0, 0, 0)
-      if (keys.fwd) _acc.addScaledVector(_fwd, accel)
       if (keys.pitchUp) look.current.x += 1.3 * delta
       if (keys.pitchDown) look.current.x -= 1.3 * delta
       look.current.x = Math.max(-1.45, Math.min(1.45, look.current.x))
@@ -243,13 +243,19 @@ export function Ship() {
       if (keys.left) yawInput -= 1
       look.current.y -= yawInput * 1.6 * delta
 
+      const boosting = keys.boost
+      const maxSpeed = boosting ? BOOST_MAX_SPEED : MAX_SPEED
+      const spd = vel.current.length()
+      const throttle = 1 - Math.min(1, (spd / maxSpeed) ** 2)
+
+      _acc.set(0, 0, 0)
+      if (keys.fwd) _acc.addScaledVector(_fwd, (boosting ? BOOST_ACCEL : ACCEL) * throttle)
+      if (keys.brake && spd > 0.01) _acc.addScaledVector(vel.current, -BRAKE_ACCEL / spd)
+
       vel.current.addScaledVector(_acc, delta)
-      if (keys.brake) {
-        vel.current.multiplyScalar(Math.exp(-3 * delta))
-      } else {
-        vel.current.multiplyScalar(Math.exp(-0.6 * delta))
+      if (!boosting && spd > MAX_SPEED) {
+        vel.current.multiplyScalar(Math.exp(-0.3 * (spd / MAX_SPEED - 1) * delta))
       }
-      if (vel.current.length() > maxSpeed) vel.current.setLength(maxSpeed)
       ship.position.addScaledVector(vel.current, delta)
     }
 
@@ -302,11 +308,11 @@ export function Ship() {
     camQ.current.slerp(ship.quaternion, 1 - Math.exp(-CAM_LAG_K * delta))
     camera.quaternion.copy(camQ.current)
 
-    setSpeed(Math.round(vel.current.length()))
+    setSpeed(Math.round(motion.speed))
   })
 
   return (
-    <group ref={shipRef} position={[0, 260, 1350]}>
+    <group ref={shipRef} position={[0, 260, 5400]}>
       <group ref={modelRef} rotation={MODEL_ROTATION} scale={MODEL_SCALE}>
         <primitive object={scene} />
       </group>

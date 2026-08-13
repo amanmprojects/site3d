@@ -1,45 +1,6 @@
 import * as THREE from 'three'
 import { mulberry32 } from './noise'
 
-export function createAtmosphereMaterial(color: string, intensity: number) {
-  return new THREE.ShaderMaterial({
-    uniforms: {
-      uColor: { value: new THREE.Color(color) },
-      uIntensity: { value: intensity },
-      uFade: { value: 1 },
-    },
-    vertexShader: /* glsl */ `
-      varying vec3 vNormal;
-      varying vec3 vViewPosition;
-      void main() {
-        vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
-        vNormal = normalize(normalMatrix * normal);
-        vViewPosition = -mvPosition.xyz;
-        gl_Position = projectionMatrix * mvPosition;
-      }
-    `,
-    fragmentShader: /* glsl */ `
-      uniform vec3 uColor;
-      uniform float uIntensity;
-      uniform float uFade;
-      varying vec3 vNormal;
-      varying vec3 vViewPosition;
-      void main() {
-        vec3 viewDir = normalize(vViewPosition);
-        float fres = 1.0 - abs(dot(viewDir, normalize(vNormal)));
-        float core = pow(fres, 3.0) * uIntensity;
-        float glow = pow(fres, 1.5) * uIntensity * 0.6;
-        float haze = pow(fres, 0.6) * uIntensity * 0.3;
-        gl_FragColor = vec4(uColor, 1.0) * (core + glow + haze) * uFade;
-      }
-    `,
-    transparent: true,
-    blending: THREE.AdditiveBlending,
-    depthWrite: false,
-    side: THREE.FrontSide,
-  })
-}
-
 export function createRingTexture(inner: string, outer: string, seed: number) {
   const size = 256
   const canvas = document.createElement('canvas')
@@ -89,11 +50,11 @@ export function createStarfieldMaterial() {
       void main() {
         vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
         float dist = -mvPosition.z;
-        gl_PointSize = clamp(aSize * (320.0 / dist), 0.5, 28.0);
+        gl_PointSize = clamp(aSize * (1280.0 / dist), 0.5, 28.0);
         gl_Position = projectionMatrix * mvPosition;
         vColor = aColor;
         vTwinkle = aTwinkle * (0.55 + 0.45 * sin(uTime * (1.2 + aPhase * 1.8) + aPhase * 40.0));
-        vFade = 1.0 - smoothstep(20000.0, 60000.0, dist);
+        vFade = 1.0 - smoothstep(80000.0, 240000.0, dist);
       }
     `,
     fragmentShader: /* glsl */ `

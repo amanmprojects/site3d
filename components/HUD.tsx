@@ -183,20 +183,10 @@ export function HUD() {
             <div className="absolute left-1/2 top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border border-sky-300/30" />
           </div>
 
-          {/* top-left identity + speed */}
+          {/* top-left identity */}
           <div className="absolute left-5 top-5">
             <div className="mono text-sm uppercase tracking-[0.4em] text-sky-300/60 hud-glow">
               Aman Mehtar
-            </div>
-            <div className="mono mt-2 flex items-center gap-2 text-sm uppercase tracking-widest text-sky-100/80">
-              <span className="text-sky-300/50">vel</span>
-              <span className="w-12 text-right">{speed}</span>
-              <div className="h-1 w-20 overflow-hidden border border-sky-300/20 bg-sky-900/30">
-                <div
-                  className="h-full bg-sky-300/80 transition-[width] duration-100"
-                  style={{ width: `${Math.min(100, (speed / 780) * 100)}%` }}
-                />
-              </div>
             </div>
           </div>
 
@@ -205,6 +195,26 @@ export function HUD() {
             W/A/S/D fly · mouse steer · Shift boost · R reset
             <br />
             Esc release · Enter open project
+          </div>
+
+          {/* bottom-right speed */}
+          <div className="mono absolute bottom-5 right-5 text-right">
+            <div className="flex items-baseline justify-end gap-2">
+              <span className="tabular-nums text-3xl font-semibold leading-none text-sky-100/90 hud-glow">
+                {speed}
+              </span>
+              <span className="text-[10px] uppercase tracking-[0.3em] text-sky-300/50">u/s</span>
+            </div>
+            <div className="mt-2 h-0.5 w-40 overflow-hidden bg-sky-300/10">
+              <div
+                className="h-full bg-gradient-to-r from-sky-400/60 to-sky-200/90 transition-[width] duration-100"
+                style={{ width: `${Math.min(100, (speed / 1100) * 100)}%` }}
+              />
+            </div>
+            <div className="mt-1.5 flex justify-between text-[10px] uppercase tracking-[0.25em] text-sky-300/40">
+              <span>cruise 270</span>
+              <span>boost 1100</span>
+            </div>
           </div>
 
           {/* info popup */}

@@ -5,10 +5,7 @@ import { useFrame } from '@react-three/fiber'
 import { Html, useGLTF } from '@react-three/drei'
 import * as THREE from 'three'
 import type { PlanetDef } from '@/lib/planets'
-import {
-  createAtmosphereMaterial,
-  createRingTexture,
-} from '@/lib/geometry'
+import { createRingTexture } from '@/lib/geometry'
 import { planetRegistry } from '@/lib/planetRegistry'
 import { useApp } from '@/lib/store'
 
@@ -41,11 +38,6 @@ export function Planet({ planet }: { planet: PlanetDef }) {
     }
     return group
   }, [scene, planet])
-
-  const atmosphere = useMemo(
-    () => createAtmosphereMaterial('#eef2f8', 0.7),
-    [],
-  )
 
   const ringTexture = useMemo(
     () =>
@@ -80,14 +72,6 @@ export function Planet({ planet }: { planet: PlanetDef }) {
     if (spinGroup.current) {
       spinGroup.current.rotation.y += planet.spin * delta * 10
     }
-    if (revGroup.current) {
-      const dist = state.camera.position.distanceTo(revGroup.current.position)
-      atmosphere.uniforms.uFade.value = THREE.MathUtils.smoothstep(
-        dist,
-        planet.radius * 2,
-        planet.radius * 10,
-      )
-    }
   })
 
   return (
@@ -95,11 +79,6 @@ export function Planet({ planet }: { planet: PlanetDef }) {
       <group ref={spinGroup}>
         <primitive object={model} />
       </group>
-
-      <mesh scale={1.45}>
-        <sphereGeometry args={[planet.radius, 32, 32]} />
-        <primitive object={atmosphere} attach="material" />
-      </mesh>
 
       {ringTexture && (
         <mesh rotation={[-Math.PI / 2, 0, 0]}>

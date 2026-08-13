@@ -4,8 +4,8 @@ import { useEffect, useMemo, useRef } from 'react'
 import { useAnimations, useGLTF } from '@react-three/drei'
 import * as THREE from 'three'
 
-const MODEL_SCALE = 90
-const GLOW_SIZE = 800
+const MODEL_SCALE = 90 * 3.5
+const GLOW_SIZE = 800 * 3.5
 
 function createGlowTexture() {
   const size = 256

@@ -4,6 +4,18 @@ All notable changes to this project are documented in this file.
 
 ## [Unreleased]
 
+- Flight feel buffed: acceleration (`ACCEL` 400 u/s², was 135) and reverse-thrust braking (`BRAKE_ACCEL` 800 u/s², was 260) are much faster, boost thrust raised to 1000 u/s² (was 390), and the boost speed cap raised to 1100 u/s (was 780). HUD speedometer bar and boost mark updated to match.
+
+- Removed the planet glow sprite entirely — planets now render as plain phoenix bodies with no halo or atmosphere effect.
+
+- Universe scaled up ~4× to match the bigger planets: orbits now span ≈6000–36800 units (was ≈1500–9200), skybox grew to 180000 units, camera far plane to 240000, and the starfield volume/shell distances scaled to match (24000-unit cube, 60000–128000 far shell). Ship spawn (`HOME`) moved out to stay near the inner orbit.
+- Star particles multiplied ~5×: 120k fly-through volume stars (was 26k) + 60k far-shell stars (was 12k).
+- Planet glow switched from a fresnel rim shader on a sphere (read as a hard boundary) to a soft billboard glow sprite — a white radial-gradient texture, additive-blended, no hard edge — whose opacity fades with distance (`smoothstep(radius*2, radius*10, dist)`), so it dims as you get closer and disappears near the surface.
+
+- Spaceship flight now has real inertia: thrust builds speed smoothly (`ACCEL` 135 / `BOOST_ACCEL` 390 u/s²) and tapers off via a throttle curve as you near the soft speed caps (`MAX_SPEED` 270 / `BOOST_MAX_SPEED` 780 u/s) instead of a hard clamp; there's no friction in space, so coasting keeps your speed forever and steering drifts. S applies reverse thrust to brake (`BRAKE_ACCEL` 260 u/s²), and releasing boost above cruise bleeds speed back down to `MAX_SPEED`. HUD speed readout moved from top-left to a proper bottom-right speedometer (live u/s counter + bar + cruise/boost marks); it now shows actual per-frame speed, including autopilot warp (~2700 u/s).
+
+- Planets and the sun are now ~3.5× bigger: planet radii scale up to ≈119–266 units (`radius` in `lib/planets.ts`) and the sun's model scale + glow sprite tripled-and-a-half (`MODEL_SCALE` / `GLOW_SIZE` in `Star.tsx`), so both read much larger against the skybox.
+
 - Planets now all show the phoenix GLB's original colors (no per-planet tint or emissive), and the colored atmosphere glow was replaced with a faint white glow (`#eef2f8`, intensity 0.7) that fades with camera distance (`uFade` uniform, `smoothstep(radius*2, radius*10, dist)` in `Planet.tsx`) — visible from afar, softening and disappearing as you fly closer.
 - All planets now use the single `planet_of_phoenix.glb` model (replaces `various_planets.glb`, ~110MB → ~51MB): each planet clones the `Phoenix_LOD0__0` mesh (body unit radius 22, scaled to `radius`), tinted by its project palette — body color, emissive, and atmosphere glow all use `palette.atmosphere`, so every planet gets its own hue and the glow matches the surface color. The `model` field was removed from `lib/planets.ts` and `Planet.tsx`.
 - Speed-proportional motion blur: a custom radial warp-blur effect (16-tap zoom blur toward screen center, `components/WarpBlur.tsx`) whose strength scales with the ship's actual per-frame speed (`lib/motion.ts`, written by `Ship` — covers normal flight, boost, and autopilot warp) via an exponential curve smoothed per frame in `Effects.tsx`; at cruise the scene softens slightly, at boost/warp it streaks into warp lines.

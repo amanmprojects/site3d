@@ -6,11 +6,11 @@ import * as THREE from 'three'
 import { mulberry32 } from '@/lib/noise'
 import { createStarfieldMaterial } from '@/lib/geometry'
 
-const FIELD_COUNT = 26000
-const FIELD_BOX = 6000
-const FAR_COUNT = 12000
-const FAR_MIN = 15000
-const FAR_MAX = 32000
+const FIELD_COUNT = 120000
+const FIELD_BOX = 24000
+const FAR_COUNT = 60000
+const FAR_MIN = 60000
+const FAR_MAX = 128000
 
 function starColor(rng: () => number, out: Float32Array, i: number) {
   const t = rng()
