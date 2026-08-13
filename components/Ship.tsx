@@ -5,7 +5,7 @@ import { useFrame, useThree } from '@react-three/fiber'
 import { useGLTF } from '@react-three/drei'
 import * as THREE from 'three'
 import { useApp } from '@/lib/store'
-import { setLockImpl } from '@/lib/controls'
+import { requestLock, setLockImpl } from '@/lib/controls'
 import { planetRegistry } from '@/lib/planetRegistry'
 import { sceneRef } from '@/lib/scene'
 import { motion } from '@/lib/motion'
@@ -75,6 +75,8 @@ export function Ship() {
   const camQ = useRef(new THREE.Quaternion())
   const shake = useRef(0)
   const lastPos = useRef(new THREE.Vector3(HOME.x, HOME.y, HOME.z))
+  const exitIntentional = useRef(false)
+  const relockTimer = useRef(0)
 
   const setLocked = useApp((s) => s.setLocked)
   const setSpeed = useApp((s) => s.setSpeed)
@@ -104,18 +106,20 @@ export function Ship() {
           keys.pitchDown = down
           break
         case 'KeyA':
+          keys.rollL = down
+          break
+        case 'KeyD':
+          keys.rollR = down
+          break
         case 'ArrowLeft':
           keys.left = down
           break
-        case 'KeyD':
         case 'ArrowRight':
           keys.right = down
           break
-        case 'KeyQ':
-          keys.rollL = down
-          break
-        case 'KeyE':
-          keys.rollR = down
+        case 'Space':
+          if (down) e.preventDefault()
+          keys.boost = down
           break
         case 'ShiftLeft':
         case 'ShiftRight':
@@ -138,6 +142,9 @@ export function Ship() {
             lastPos.current.copy(HOME)
           }
           break
+        case 'Escape':
+          if (down) exitIntentional.current = true
+          break
         default:
           break
       }
@@ -153,18 +160,61 @@ export function Ship() {
     }
 
     const onLockChange = () => {
-      setLocked(document.pointerLockElement === gl.domElement)
+      if (document.pointerLockElement === gl.domElement) {
+        exitIntentional.current = false
+        setLocked(true)
+      } else if (exitIntentional.current) {
+        exitIntentional.current = false
+        setLocked(false)
+      }
+    }
+
+    const tryRelock = () => {
+      if (document.visibilityState !== 'visible') return
+      if (!document.hasFocus()) return
+      if (!useApp.getState().locked) return
+      if (document.pointerLockElement === gl.domElement) return
+      requestLock()
+    }
+    const onVisible = () => {
+      if (document.visibilityState !== 'visible') return
+      if (relockTimer.current) window.clearTimeout(relockTimer.current)
+      relockTimer.current = window.setTimeout(tryRelock, 50)
+    }
+    const onLockError = () => {
+      if (
+        document.visibilityState === 'visible' &&
+        document.hasFocus() &&
+        useApp.getState().locked
+      ) {
+        setLocked(false)
+      }
+    }
+    const onMouseDown = (e: MouseEvent) => {
+      if (e.button !== 0) return
+      if (document.visibilityState !== 'visible') return
+      if (document.pointerLockElement === gl.domElement) return
+      if (useApp.getState().locked) requestLock()
     }
 
     window.addEventListener('keydown', kd)
     window.addEventListener('keyup', ku)
     window.addEventListener('mousemove', onMove)
+    window.addEventListener('focus', onVisible)
+    document.addEventListener('visibilitychange', onVisible)
     document.addEventListener('pointerlockchange', onLockChange)
+    document.addEventListener('pointerlockerror', onLockError)
+    document.addEventListener('mousedown', onMouseDown)
     return () => {
+      if (relockTimer.current) window.clearTimeout(relockTimer.current)
       window.removeEventListener('keydown', kd)
       window.removeEventListener('keyup', ku)
       window.removeEventListener('mousemove', onMove)
+      window.removeEventListener('focus', onVisible)
+      document.removeEventListener('visibilitychange', onVisible)
       document.removeEventListener('pointerlockchange', onLockChange)
+      document.removeEventListener('pointerlockerror', onLockError)
+      document.removeEventListener('mousedown', onMouseDown)
       sceneRef.camera = null
     }
   }, [camera, gl, setLocked])
@@ -289,8 +339,15 @@ export function Ship() {
       if (warpTo) cancelWarp()
     }
 
-    // ---- actual per-frame speed (feeds motion blur) ----
-    motion.speed = delta > 0 ? ship.position.distanceTo(lastPos.current) / delta : 0
+    // ---- actual per-frame motion (feeds motion blur + star dust) ----
+    if (delta > 0) {
+      _tmp.copy(ship.position).sub(lastPos.current).divideScalar(delta)
+      motion.velocity.copy(_tmp)
+    } else {
+      motion.velocity.set(0, 0, 0)
+    }
+    motion.speed = motion.velocity.length()
+    motion.position.copy(ship.position)
     lastPos.current.copy(ship.position)
 
     // ---- thruster visuals ----

@@ -6,13 +6,14 @@ import * as THREE from 'three'
 import { mulberry32 } from '@/lib/noise'
 import { createStarfieldMaterial } from '@/lib/geometry'
 
-const FIELD_COUNT = 120000
-const FIELD_BOX = 24000
+const FIELD_COUNT = 2400000
+const FIELD_RADIUS = 48000
+const FIELD_HALF_H = 10000
 const FAR_COUNT = 60000
 const FAR_MIN = 60000
 const FAR_MAX = 128000
 
-function starColor(rng: () => number, out: Float32Array, i: number) {
+export function starColor(rng: () => number, out: Float32Array, i: number) {
   const t = rng()
   const b = 0.55 + rng() * 0.75
   if (t < 0.7) {
@@ -39,11 +40,13 @@ function buildFieldGeometry() {
   const phases = new Float32Array(FIELD_COUNT)
 
   for (let i = 0; i < FIELD_COUNT; i++) {
-    positions[i * 3] = (rng() * 2 - 1) * FIELD_BOX
-    positions[i * 3 + 1] = (rng() * 2 - 1) * FIELD_BOX
-    positions[i * 3 + 2] = (rng() * 2 - 1) * FIELD_BOX
+    const theta = rng() * Math.PI * 2
+    const r = FIELD_RADIUS * Math.sqrt(rng())
+    positions[i * 3] = r * Math.cos(theta)
+    positions[i * 3 + 1] = ((rng() + rng() + rng()) / 3 - 0.5) * 2 * FIELD_HALF_H
+    positions[i * 3 + 2] = r * Math.sin(theta)
     starColor(rng, colors, i)
-    sizes[i] = 2 + Math.pow(rng(), 2.2) * 4
+    sizes[i] = 2 + Math.pow(rng(), 2.2) * 6
     twinkles[i] = rng() > 0.68 ? 1 : 0
     phases[i] = rng() * Math.PI * 2
   }
@@ -104,3 +107,4 @@ export function Starfield() {
     </group>
   )
 }
+

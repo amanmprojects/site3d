@@ -96,12 +96,10 @@ function Intro({ onWarp }: { onWarp: (id: string) => void }) {
         </p>
 
         <div className="mono mt-6 grid grid-cols-2 gap-x-6 gap-y-1 text-sm uppercase tracking-wider text-sky-200/60">
-          <span>W / S — thrust</span>
+          <span>W / S — thrust / brake</span>
           <span>Mouse — steer</span>
-          <span>A / D — turn</span>
-          <span>Arrows — pitch</span>
-          <span>Q / E — roll</span>
-          <span>Shift — boost</span>
+          <span>A / D — roll</span>
+          <span>Shift / Space — boost</span>
           <span>R — reset position</span>
           <span>Esc — release cursor</span>
         </div>
@@ -192,7 +190,7 @@ export function HUD() {
 
           {/* bottom-left hints */}
           <div className="mono absolute bottom-5 left-5 text-xs uppercase leading-relaxed tracking-[0.3em] text-sky-300/40">
-            W/A/S/D fly · mouse steer · Shift boost · R reset
+            Mouse steer · W/S thrust/brake · A/D roll · Shift/Space boost · R reset
             <br />
             Esc release · Enter open project
           </div>

@@ -4,6 +4,20 @@ All notable changes to this project are documented in this file.
 
 ## [Unreleased]
 
+- Flight controls reworked to the arcade standard: mouse steers (pitch/yaw), W/S = thrust/brake, A/D = roll, Shift/Space = boost (Space still launches from the intro screen — holding it through launch starts boosting), arrow keys remain as a pitch/yaw fallback. Key handlers updated in `components/Ship.tsx`, hints in `components/HUD.tsx`.
+
+- Fixed the star dust moving with the view twice over: the streaming layer (`components/SpaceDust.tsx`) is now truly world-anchored — dust stars keep **fixed world positions** (zero velocity, exactly like the world starfield) and are recycled on the CPU each frame only when they fall outside a 12000-unit cylinder window around the ship (radius 1200 along the ship's actual velocity axis, respawns placed 3000–6000 units ahead so pops are far away and disappearances happen off-screen behind the ship). This replaces the earlier shader-scroll approach, where stars were attached to the ship's frame and visibly drifted forward at twice the ship's speed until they wrapped out of view (a rigid ball of stars around the camera on launch). `lib/motion.ts` still carries `position`/`velocity`/`speed` (written by `Ship` from real displacement, including warp) for the window and the speed-based fade-in.
+
+- The launch screen now only appears on first load and when Esc is pressed. Losing focus (tab switch, Alt+Tab) exits pointer lock but keeps the flight state instead of showing the intro; pointer lock is re-acquired automatically when the tab/window regains focus (or on the next left click if the browser dropped the lock while the tab stayed visible), and if the browser refuses the re-request the intro reappears rather than leaving the game stuck.
+
+- Starfield rebuilt for a real sense of speed: the fly-through volume is now a full-system disk (2.4M stars, radius 48000, ±10000 height, density biased toward the ecliptic plane — was 120k stars in a 24000-unit cube that left outer orbits in a void), and a new ship-relative streaming dust layer (`components/SpaceDust.tsx`, 2400 stars in a tube around the ship) scrolls backward at the ship's actual speed in the vertex shader and fades in above ~60 u/s, so boosting produces a constant stream of stars zipping past (streaked further by the existing warp blur). Dust scroll is driven by `lib/motion.ts` speed, same as the blur.
+
+- Halved planet self-rotation speed again: the spin multiplier in `components/Planet.tsx` dropped from 10 to 5.
+
+- Halved planet motion speeds: orbital revolution (`speed = 1 / Math.sqrt(orbit)`) and self-rotation (`spin` range halved) in `lib/planets.ts`.
+
+- Removed planet rings — planets are now bare phoenix bodies with no ring geometry or ring texture (`lib/planets.ts`, `components/Planet.tsx`; deleted `createRingTexture` from `lib/geometry.ts`).
+
 - Reverse-thrust braking softened: `BRAKE_ACCEL` reduced from 800 to 400 u/s² (full stop from cruise in ~0.7s instead of ~0.3s; from boost ~2.7s), so the S brake coasts you down instead of slamming you to a halt.
 
 - Fixed the movement/direction mismatch: the ship now flies where it points. Added flight-assist steering — the velocity vector continuously turns toward the ship's facing at `STEER_RATE` (2.2 rad/s, `components/Ship.tsx`) instead of drifting forever in the original direction, so mouse and A/D turns now visibly change the trajectory (previously the throttle curve hit zero at cruise speed and steering had no effect on motion at all). Corrected the intro control hints (A/D turn, arrow keys pitch).

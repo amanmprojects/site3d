@@ -18,7 +18,6 @@ export interface PlanetDef {
   tags: string[]
   type: PlanetType
   palette: Palette
-  rings?: { inner: string; outer: string }
   orbit: number
   radius: number
   speed: number
@@ -36,7 +35,6 @@ interface Theme {
   tags: string[]
   type: PlanetType
   palette: Palette
-  rings?: { inner: string; outer: string }
 }
 
 const THEMES: Theme[] = [
@@ -59,7 +57,6 @@ const THEMES: Theme[] = [
     tags: ['chess AI', 'policy/value net', 'self-play'],
     type: 'rocky',
     palette: { low: '#141414', mid: '#6e6e6e', high: '#f2f2f2', atmosphere: '#cfcfcf' },
-    rings: { inner: '#3a3a3a', outer: '#f5f5f5' },
   },
   {
     id: 'disk-agent',
@@ -70,7 +67,6 @@ const THEMES: Theme[] = [
     tags: ['agent gateway', 'Telegram', 'memory', 'automation'],
     type: 'ice',
     palette: { low: '#0b1e3a', mid: '#14506e', high: '#9fe8ff', atmosphere: '#38bdf8' },
-    rings: { inner: '#2b6c8a', outer: '#bfeaff' },
   },
   {
     id: 'harness',
@@ -161,21 +157,20 @@ const THEMES: Theme[] = [
     tags: ['experiment', 'WIP', '???'],
     type: 'tech',
     palette: { low: '#0a0a12', mid: '#2a1a4a', high: '#e879f9', atmosphere: '#e879f9', emissive: '#d946ef' },
-    rings: { inner: '#3a1a4a', outer: '#f0abfc' },
   },
 ]
 
 export const PLANETS: PlanetDef[] = THEMES.map((t, i) => {
   const orbit = 6000 + i * 2800
   const radius = (34 + (i % 4) * 14) * 3.5
-  const speed = 2 / Math.sqrt(orbit)
+  const speed = 1 / Math.sqrt(orbit)
   const rng = mulberry32(1000 + i * 37)
   const phase = rng() * Math.PI * 2
   const inclination: [number, number] = [
     (rng() - 0.5) * 0.35,
     (rng() - 0.5) * 0.35,
   ]
-  const spin = (rng() * 0.3 + 0.06) * (rng() > 0.5 ? 1 : -1)
+  const spin = (rng() * 0.15 + 0.03) * (rng() > 0.5 ? 1 : -1)
   const seed = Math.floor(rng() * 1e9)
   return {
     id: t.id,
@@ -185,7 +180,6 @@ export const PLANETS: PlanetDef[] = THEMES.map((t, i) => {
     tags: t.tags,
     type: t.type,
     palette: t.palette,
-    rings: t.rings,
     orbit,
     radius,
     speed,

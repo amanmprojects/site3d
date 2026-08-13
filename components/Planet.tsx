@@ -5,7 +5,6 @@ import { useFrame } from '@react-three/fiber'
 import { Html, useGLTF } from '@react-three/drei'
 import * as THREE from 'three'
 import type { PlanetDef } from '@/lib/planets'
-import { createRingTexture } from '@/lib/geometry'
 import { planetRegistry } from '@/lib/planetRegistry'
 import { useApp } from '@/lib/store'
 
@@ -39,14 +38,6 @@ export function Planet({ planet }: { planet: PlanetDef }) {
     return group
   }, [scene, planet])
 
-  const ringTexture = useMemo(
-    () =>
-      planet.rings
-        ? createRingTexture(planet.rings.inner, planet.rings.outer, planet.seed)
-        : null,
-    [planet],
-  )
-
   useEffect(() => {
     if (revGroup.current) {
       planetRegistry.set(planet.id, {
@@ -70,7 +61,7 @@ export function Planet({ planet }: { planet: PlanetDef }) {
       )
     }
     if (spinGroup.current) {
-      spinGroup.current.rotation.y += planet.spin * delta * 10
+      spinGroup.current.rotation.y += planet.spin * delta * 5
     }
   })
 
@@ -79,20 +70,6 @@ export function Planet({ planet }: { planet: PlanetDef }) {
       <group ref={spinGroup}>
         <primitive object={model} />
       </group>
-
-      {ringTexture && (
-        <mesh rotation={[-Math.PI / 2, 0, 0]}>
-          <ringGeometry
-            args={[planet.radius * 1.5, planet.radius * 2.35, 128]}
-          />
-          <meshBasicMaterial
-            map={ringTexture}
-            transparent
-            side={THREE.DoubleSide}
-            depthWrite={false}
-          />
-        </mesh>
-      )}
 
       <Html
         position={[0, planet.radius + 1.6, 0]}

@@ -6,6 +6,7 @@ import { useGLTF, useTexture } from '@react-three/drei'
 import { Ship } from './Ship'
 import { SolarSystem } from './SolarSystem'
 import { Starfield } from './Starfield'
+import { SpaceDust } from './SpaceDust'
 import { NightSky } from './NightSky'
 import { Effects } from './Effects'
 
@@ -27,6 +28,7 @@ export function Experience() {
         <NightSky />
         <SolarSystem />
         <Starfield />
+        <SpaceDust />
         <Ship />
         <Effects />
       </Suspense>
