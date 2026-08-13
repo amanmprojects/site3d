@@ -50,6 +50,7 @@ When you make a meaningful change to the codebase, add an entry under `[Unreleas
 | `components/Starfield.tsx` | Near-field parallax stars (drei `<Stars>`) |
 | `components/Effects.tsx` | Postprocessing (Bloom, Vignette, Noise) |
 | `components/HUD.tsx` | All DOM UI: intro/launch screen, crosshair, target indicator, info popup |
+| `components/LoadingScreen.tsx` | Boot/loading overlay (z-40, covers Intro): shows asset load progress via drei `useProgress`, fades out when done |
 | `lib/planets.ts` | **Single source of truth** for projects: name, description, link, tags, palette, `model` (GLB node names), orbit/radius/speed/phase/seed |
 | `lib/geometry.ts` | Atmosphere shader + ring texture |
 | `lib/noise.ts` | Seeded PRNG (`mulberry32`) |
@@ -72,4 +73,4 @@ When you make a meaningful change to the codebase, add an entry under `[Unreleas
 
 ## Controls (for reference)
 
-W thrust · S brake · Up/Down pitch · A/D yaw · mouse steer (pointer-locked) · Q/E roll · Shift boost · R reset · Esc release cursor · Enter opens the targeted project link.
+W thrust · S brake · Up/Down pitch · A/D yaw · mouse steer (pointer-locked) · Q/E roll · Shift boost · R reset · Esc release cursor · Space launch · Enter opens the targeted project link.

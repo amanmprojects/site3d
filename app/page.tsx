@@ -2,6 +2,7 @@
 
 import dynamic from 'next/dynamic'
 import { HUD } from '@/components/HUD'
+import { LoadingScreen } from '@/components/LoadingScreen'
 
 const Experience = dynamic(
   () => import('@/components/Experience').then((m) => m.Experience),
@@ -12,6 +13,7 @@ export default function Page() {
   return (
     <main className="relative h-screen w-screen overflow-hidden bg-black">
       <Experience />
+      <LoadingScreen />
       <HUD />
     </main>
   )

@@ -79,6 +79,28 @@ body {
   animation: pulse 2.4s ease-in-out infinite;
 }
 
+@keyframes orbit-spin {
+  from { transform: rotate(0deg) translateX(32px) rotate(0deg); }
+  to { transform: rotate(360deg) translateX(32px) rotate(-360deg); }
+}
+
+.orbit-dot {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 8px;
+  height: 8px;
+  margin: -4px 0 0 -4px;
+  border-radius: 9999px;
+  background: rgba(255, 184, 77, 0.9);
+  box-shadow: 0 0 10px rgba(255, 184, 77, 0.9);
+  animation: orbit-spin 2.6s linear infinite;
+}
+
+.loading-pulse {
+  animation: pulse 2.4s ease-in-out infinite;
+}
+
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(6px); }
   to { opacity: 1; transform: translateY(0); }

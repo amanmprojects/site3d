@@ -68,6 +68,17 @@ function TargetIndicator() {
 }
 
 function Intro({ onWarp }: { onWarp: (id: string) => void }) {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.code === 'Space' && !e.repeat) {
+        e.preventDefault()
+        requestLock()
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
+
   return (
     <div className="pointer-events-auto absolute inset-0 z-30 flex flex-col items-center justify-between bg-black/60 backdrop-blur-[2px]">
       <div className="flex-1" />
@@ -98,10 +109,13 @@ function Intro({ onWarp }: { onWarp: (id: string) => void }) {
         <button
           type="button"
           onClick={() => requestLock()}
-          className="mono panel corner mt-7 px-8 py-3 text-xs uppercase tracking-[0.35em] text-amber-200 transition hover:text-white hover:border-amber-300/60 hud-glow"
+          className="mono panel corner mt-7 px-10 py-3 text-xs uppercase tracking-[0.35em] text-amber-200 transition hover:text-white hover:border-amber-300/60 hud-glow"
         >
-          Click to launch
+          Launch
         </button>
+        <div className="mono mt-3 text-[9px] uppercase tracking-[0.3em] text-sky-300/40">
+          or press space
+        </div>
       </div>
 
       <div className="w-full max-w-5xl px-6 pb-8">
