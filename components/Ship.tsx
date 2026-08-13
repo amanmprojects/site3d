@@ -11,6 +11,7 @@ import { sceneRef } from '@/lib/scene'
 
 const keys = {
   fwd: false,
+  brake: false,
   pitchUp: false,
   pitchDown: false,
   left: false,
@@ -78,10 +79,14 @@ export function Ship() {
     const makeKeyHandler = (down: boolean) => (e: KeyboardEvent) => {
       switch (e.code) {
         case 'KeyW':
+          keys.fwd = down
+          break
+        case 'KeyS':
+          keys.brake = down
+          break
         case 'ArrowUp':
           keys.pitchUp = down
           break
-        case 'KeyS':
         case 'ArrowDown':
           keys.pitchDown = down
           break
@@ -92,9 +97,6 @@ export function Ship() {
         case 'KeyD':
         case 'ArrowRight':
           keys.right = down
-          break
-        case 'Space':
-          keys.fwd = down
           break
         case 'KeyQ':
           keys.rollL = down
@@ -198,7 +200,11 @@ export function Ship() {
       euler.current.y -= yawInput * 1.6 * delta
 
       vel.current.addScaledVector(_acc, delta)
-      vel.current.multiplyScalar(Math.exp(-0.6 * delta))
+      if (keys.brake) {
+        vel.current.multiplyScalar(Math.exp(-3 * delta))
+      } else {
+        vel.current.multiplyScalar(Math.exp(-0.6 * delta))
+      }
       if (vel.current.length() > maxSpeed) vel.current.setLength(maxSpeed)
       ship.position.addScaledVector(vel.current, delta)
     }
