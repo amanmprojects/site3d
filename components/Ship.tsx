@@ -33,6 +33,7 @@ const _toHold = new THREE.Vector3()
 const _target = new THREE.Vector3()
 const _offset = new THREE.Vector3()
 const _q = new THREE.Quaternion()
+const _q2 = new THREE.Quaternion()
 
 const CHASE_OFFSET = new THREE.Vector3(0, 1.2, 8)
 const CAM_LAG_K = 7
@@ -44,6 +45,7 @@ const BRAKE_ACCEL = 800
 const MAX_SPEED = 270
 const BOOST_MAX_SPEED = 1100
 const LOOK_STICKINESS = 14
+const STEER_RATE = 2.2
 const BANK_MAX = 0.2
 const BANK_RATE_FULL = 3.5
 const ATT_PITCH_MAX = 0.32
@@ -246,6 +248,16 @@ export function Ship() {
       const boosting = keys.boost
       const maxSpeed = boosting ? BOOST_MAX_SPEED : MAX_SPEED
       const spd = vel.current.length()
+      if (spd > 0.5) {
+        _dir.copy(vel.current).normalize()
+        const angle = Math.acos(THREE.MathUtils.clamp(_dir.dot(_fwd), -1, 1))
+        if (angle > 1e-4) {
+          _q.setFromUnitVectors(_dir, _fwd)
+          _q2.identity()
+          _q2.slerp(_q, Math.min(1, (STEER_RATE * delta) / angle))
+          vel.current.copy(_dir).applyQuaternion(_q2).multiplyScalar(spd)
+        }
+      }
       const throttle = 1 - Math.min(1, (spd / maxSpeed) ** 2)
 
       _acc.set(0, 0, 0)

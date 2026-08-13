@@ -98,10 +98,10 @@ function Intro({ onWarp }: { onWarp: (id: string) => void }) {
         <div className="mono mt-6 grid grid-cols-2 gap-x-6 gap-y-1 text-sm uppercase tracking-wider text-sky-200/60">
           <span>W / S — thrust</span>
           <span>Mouse — steer</span>
-          <span>A / D — strafe</span>
+          <span>A / D — turn</span>
+          <span>Arrows — pitch</span>
           <span>Q / E — roll</span>
           <span>Shift — boost</span>
-          <span>Space / Ctrl — up / down</span>
           <span>R — reset position</span>
           <span>Esc — release cursor</span>
         </div>

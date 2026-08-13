@@ -4,6 +4,8 @@ All notable changes to this project are documented in this file.
 
 ## [Unreleased]
 
+- Fixed the movement/direction mismatch: the ship now flies where it points. Added flight-assist steering — the velocity vector continuously turns toward the ship's facing at `STEER_RATE` (2.2 rad/s, `components/Ship.tsx`) instead of drifting forever in the original direction, so mouse and A/D turns now visibly change the trajectory (previously the throttle curve hit zero at cruise speed and steering had no effect on motion at all). Corrected the intro control hints (A/D turn, arrow keys pitch).
+
 - Flight feel buffed: acceleration (`ACCEL` 400 u/s², was 135) and reverse-thrust braking (`BRAKE_ACCEL` 800 u/s², was 260) are much faster, boost thrust raised to 1000 u/s² (was 390), and the boost speed cap raised to 1100 u/s (was 780). HUD speedometer bar and boost mark updated to match.
 
 - Removed the planet glow sprite entirely — planets now render as plain phoenix bodies with no halo or atmosphere effect.
