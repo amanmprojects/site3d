@@ -9,7 +9,7 @@ import { Starfield } from './Starfield'
 import { NightSky } from './NightSky'
 import { Effects } from './Effects'
 
-useGLTF.preload('/planets/various_planets.glb')
+useGLTF.preload('/planets/planet_of_phoenix.glb')
 useGLTF.preload('/ship/ship.glb')
 useGLTF.preload('/sun/stroming_sun.glb')
 useTexture.preload('/sky/NightSkyHDRI008_8K.jpg')

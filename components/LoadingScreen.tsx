@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useProgress } from '@react-three/drei'
 
 const ITEM_LABELS: Record<string, string> = {
-  '/planets/various_planets.glb': 'planetary database',
+  '/planets/planet_of_phoenix.glb': 'planetary database',
   '/ship/ship.glb': 'starship hull',
   '/sun/stroming_sun.glb': 'solar core',
   '/sky/NightSkyHDRI008_8K.jpg': 'deep-space survey',

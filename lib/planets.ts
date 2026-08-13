@@ -17,7 +17,6 @@ export interface PlanetDef {
   link: string
   tags: string[]
   type: PlanetType
-  model: string[]
   palette: Palette
   rings?: { inner: string; outer: string }
   orbit: number
@@ -36,7 +35,6 @@ interface Theme {
   link: string
   tags: string[]
   type: PlanetType
-  model: string[]
   palette: Palette
   rings?: { inner: string; outer: string }
 }
@@ -50,7 +48,6 @@ const THEMES: Theme[] = [
     link: 'https://github.com/amanmprojects/llm',
     tags: ['transformers', 'LLM training', 'PyTorch', 'GPU'],
     type: 'lava',
-    model: ['planet_lava_7'],
     palette: { low: '#2a0a08', mid: '#b8431a', high: '#ffd27a', atmosphere: '#ff8c3a', emissive: '#ff6a00' },
   },
   {
@@ -61,7 +58,6 @@ const THEMES: Theme[] = [
     link: 'https://github.com/amanmprojects/chess-bot',
     tags: ['chess AI', 'policy/value net', 'self-play'],
     type: 'rocky',
-    model: ['planet_barren_8'],
     palette: { low: '#141414', mid: '#6e6e6e', high: '#f2f2f2', atmosphere: '#cfcfcf' },
     rings: { inner: '#3a3a3a', outer: '#f5f5f5' },
   },
@@ -73,7 +69,6 @@ const THEMES: Theme[] = [
     link: 'https://github.com/amanmprojects/disk-agent',
     tags: ['agent gateway', 'Telegram', 'memory', 'automation'],
     type: 'ice',
-    model: ['planet_frozen_6'],
     palette: { low: '#0b1e3a', mid: '#14506e', high: '#9fe8ff', atmosphere: '#38bdf8' },
     rings: { inner: '#2b6c8a', outer: '#bfeaff' },
   },
@@ -85,7 +80,6 @@ const THEMES: Theme[] = [
     link: 'https://github.com/amanmprojects/harness',
     tags: ['Electron', 'coding agent', 'xAI', 'TUI'],
     type: 'tech',
-    model: ['planet_gas_cloud_02_9'],
     palette: { low: '#050816', mid: '#16325c', high: '#7dd3fc', atmosphere: '#38bdf8', emissive: '#22d3ee' },
   },
   {
@@ -96,7 +90,6 @@ const THEMES: Theme[] = [
     link: 'https://github.com/amanmprojects/agent',
     tags: ['desktop', 'Pi SDK', 'Monaco', 'PTY'],
     type: 'tech',
-    model: ['planet_continental_4', 'planet_continental_clouds_5'],
     palette: { low: '#04201f', mid: '#0f6b64', high: '#7fe0d4', atmosphere: '#2dd4bf', emissive: '#2dd4bf' },
   },
   {
@@ -107,7 +100,6 @@ const THEMES: Theme[] = [
     link: 'https://github.com/amanmprojects/purr',
     tags: ['browser dev env', 'WASM', 'bash', 'sandbox'],
     type: 'ocean',
-    model: ['planet_smac_0', 'planet_smac_cloud_1'],
     palette: { low: '#062e3a', mid: '#0e7a6b', high: '#7fe0b0', atmosphere: '#34d399' },
   },
   {
@@ -118,7 +110,6 @@ const THEMES: Theme[] = [
     link: 'https://github.com/amanmprojects/lunaeye',
     tags: ['vision', 'multimodal', 'extensions'],
     type: 'ice',
-    model: ['planet_frozen_6'],
     palette: { low: '#150a2e', mid: '#4c2a85', high: '#c4b5fd', atmosphere: '#a78bfa', emissive: '#a78bfa' },
   },
   {
@@ -129,7 +120,6 @@ const THEMES: Theme[] = [
     link: 'https://github.com/amanmprojects/neo-aman-code',
     tags: ['TUI', 'OpenTUI', 'AI SDK', 'agents'],
     type: 'tech',
-    model: ['planet_gas_2', 'planet_gas_cloud_01_3'],
     palette: { low: '#04160a', mid: '#0d3d1f', high: '#86efac', atmosphere: '#4ade80', emissive: '#22c55e' },
   },
   {
@@ -140,7 +130,6 @@ const THEMES: Theme[] = [
     link: 'https://github.com/amanmprojects/llm-endpoint-bench',
     tags: ['benchmarking', 'inference', 'tooling'],
     type: 'rocky',
-    model: ['planet_barren_8'],
     palette: { low: '#20242a', mid: '#6b7280', high: '#d1d5db', atmosphere: '#9ca3af' },
   },
   {
@@ -151,7 +140,6 @@ const THEMES: Theme[] = [
     link: 'https://github.com/amanmprojects/grok-token-tracker',
     tags: ['tokens', 'usage tracking', 'tooling'],
     type: 'lava',
-    model: ['planet_lava_7'],
     palette: { low: '#2a1205', mid: '#8a4a12', high: '#fbbf24', atmosphere: '#fbbf24', emissive: '#f59e0b' },
   },
   {
@@ -162,7 +150,6 @@ const THEMES: Theme[] = [
     link: 'https://github.com/amanmprojects/chess',
     tags: ['chess engine', 'JavaScript', 'search'],
     type: 'gas',
-    model: ['planet_gas_2', 'planet_gas_cloud_01_3'],
     palette: { low: '#6b4a1a', mid: '#c9a34a', high: '#f5e6c4', atmosphere: '#e0b35a' },
   },
   {
@@ -173,7 +160,6 @@ const THEMES: Theme[] = [
     link: 'https://github.com/amanmprojects/kairo',
     tags: ['experiment', 'WIP', '???'],
     type: 'tech',
-    model: ['planet_gas_cloud_02_9'],
     palette: { low: '#0a0a12', mid: '#2a1a4a', high: '#e879f9', atmosphere: '#e879f9', emissive: '#d946ef' },
     rings: { inner: '#3a1a4a', outer: '#f0abfc' },
   },
@@ -199,7 +185,6 @@ export const PLANETS: PlanetDef[] = THEMES.map((t, i) => {
     tags: t.tags,
     type: t.type,
     palette: t.palette,
-    model: t.model,
     rings: t.rings,
     orbit,
     radius,

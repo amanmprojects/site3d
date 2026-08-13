@@ -8,6 +8,7 @@ import { useApp } from '@/lib/store'
 import { setLockImpl } from '@/lib/controls'
 import { planetRegistry } from '@/lib/planetRegistry'
 import { sceneRef } from '@/lib/scene'
+import { motion } from '@/lib/motion'
 
 const keys = {
   fwd: false,
@@ -66,6 +67,7 @@ export function Ship() {
   const attRoll = useRef(0)
   const camQ = useRef(new THREE.Quaternion())
   const shake = useRef(0)
+  const lastPos = useRef(new THREE.Vector3(HOME.x, HOME.y, HOME.z))
 
   const setLocked = useApp((s) => s.setLocked)
   const setSpeed = useApp((s) => s.setSpeed)
@@ -126,6 +128,7 @@ export function Ship() {
             attPitch.current = 0
             attRoll.current = 0
             shake.current = 0
+            lastPos.current.copy(HOME)
           }
           break
         default:
@@ -267,6 +270,10 @@ export function Ship() {
       shake.current = Math.min(1.4, shake.current + Math.min(0.9, (minDist - dist) * 0.12))
       if (warpTo) cancelWarp()
     }
+
+    // ---- actual per-frame speed (feeds motion blur) ----
+    motion.speed = delta > 0 ? ship.position.distanceTo(lastPos.current) / delta : 0
+    lastPos.current.copy(ship.position)
 
     // ---- thruster visuals ----
     const v = vis.current

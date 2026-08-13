@@ -6,6 +6,7 @@ export function createAtmosphereMaterial(color: string, intensity: number) {
     uniforms: {
       uColor: { value: new THREE.Color(color) },
       uIntensity: { value: intensity },
+      uFade: { value: 1 },
     },
     vertexShader: /* glsl */ `
       varying vec3 vNormal;
@@ -20,6 +21,7 @@ export function createAtmosphereMaterial(color: string, intensity: number) {
     fragmentShader: /* glsl */ `
       uniform vec3 uColor;
       uniform float uIntensity;
+      uniform float uFade;
       varying vec3 vNormal;
       varying vec3 vViewPosition;
       void main() {
@@ -28,7 +30,7 @@ export function createAtmosphereMaterial(color: string, intensity: number) {
         float core = pow(fres, 3.0) * uIntensity;
         float glow = pow(fres, 1.5) * uIntensity * 0.6;
         float haze = pow(fres, 0.6) * uIntensity * 0.3;
-        gl_FragColor = vec4(uColor, 1.0) * (core + glow + haze);
+        gl_FragColor = vec4(uColor, 1.0) * (core + glow + haze) * uFade;
       }
     `,
     transparent: true,

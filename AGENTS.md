@@ -6,7 +6,7 @@ Guidance for AI coding agents working in this repository.
 
 A 3D space-exploration portfolio: the visitor pilots a spaceship (third-person chase cam) through a solar system where each orbiting planet represents one of Aman Mehtar's projects. Fly close to a planet to scan it and see its info panel.
 
-Built with **Next.js 16 (App Router) + React 19 + TypeScript + React Three Fiber (`@react-three/fiber` + `@react-three/drei`) + `@react-three/postprocessing`**, Tailwind CSS 4, and Zustand for UI state. Planet bodies come from a single Sketchfab GLB (`various_planets.glb`, 7 planets: smac, gas, continental, frozen, lava, barren, gas_cloud_02 — with cloud layers), cloned per project.
+Built with **Next.js 16 (App Router) + React 19 + TypeScript + React Three Fiber (`@react-three/fiber` + `@react-three/drei`) + `@react-three/postprocessing`**, Tailwind CSS 4, and Zustand for UI state. Planet bodies come from a single Sketchfab GLB (`planet_of_phoenix.glb`, a phoenix-textured planet), cloned per project in its original colors.
 
 ## Commands
 
@@ -44,32 +44,35 @@ When you make a meaningful change to the codebase, add an entry under `[Unreleas
 | `components/Experience.tsx` | `<Canvas>` setup (camera, dpr, lights) + scene composition |
 | `components/Ship.tsx` | Ship (loads GLB model via `useGLTF`) + flight controls + chase camera |
 | `components/SolarSystem.tsx` | Star + planets + orbit lines; proximity detection → store |
-| `components/Planet.tsx` | One planet: clones the assigned node(s) from `various_planets.glb`, atmosphere glow, optional rings, Html label |
+| `components/Planet.tsx` | One planet: clones the phoenix mesh from `planet_of_phoenix.glb` (original colors), distance-faded white atmosphere glow, optional rings, Html label |
 | `components/Star.tsx` | Central sun (animated GLB `stroming_sun.glb` + radial-gradient glow sprite + point light) |
 | `components/NightSky.tsx` | Background skybox (HDRI equirect texture, slowly rotating) |
 | `components/Starfield.tsx` | Scattered star particles: a 3D volume (26k stars in a 6000-unit cube) you fly through + a far spherical shell (12k stars, 15000–32000 units) for depth; custom shader per-star size/color/twinkle |
-| `components/Effects.tsx` | Postprocessing (Bloom, Vignette, Noise) |
+| `components/Effects.tsx` | Postprocessing (Bloom, Vignette, Noise) + speed-scaled warp blur strength driver |
+| `components/WarpBlur.tsx` | Custom radial motion-blur effect (`WarpBlurEffect`, 16-tap zoom blur toward screen center); strength driven per frame from `lib/motion.ts` |
 | `components/HUD.tsx` | All DOM UI: intro/launch screen, crosshair, target indicator, info popup |
 | `components/LoadingScreen.tsx` | Boot/loading overlay (z-40, covers Intro): shows asset load progress via drei `useProgress`, fades out when done |
-| `lib/planets.ts` | **Single source of truth** for projects: name, description, link, tags, palette, `model` (GLB node names), orbit/radius/speed/phase/seed |
+| `lib/planets.ts` | **Single source of truth** for projects: name, description, link, tags, palette, orbit/radius/speed/phase/seed |
 | `lib/geometry.ts` | Atmosphere shader + ring texture |
 | `lib/noise.ts` | Seeded PRNG (`mulberry32`) |
 | `lib/store.ts`, `lib/controls.ts`, `lib/scene.ts`, `lib/planetRegistry.ts` | Client state plumbing (see above) |
+| `lib/motion.ts` | Module singleton holding the ship's actual per-frame speed (written by `Ship`, read by `Effects`) for speed-scaled motion blur |
 | `public/sky/` | HDRI sky texture (`NightSkyHDRI008_8K.jpg`, ~22MB) |
 | `public/ship/ship.glb` | Animated ship model (multi-universe space ship, ~21MB) |
-| `public/planets/various_planets.glb` | All planet models in one file (~110MB, 7 planets + cloud layers; `useGLTF.preload` in `Experience.tsx`) |
+| `public/planets/planet_of_phoenix.glb` | Phoenix planet model (~51MB, single mesh `Phoenix_LOD0__0`, body unit radius 22; `useGLTF.preload` in `Experience.tsx`) |
 | `public/sun/stroming_sun.glb` | Animated sun model (layered rotating/scale-pulsing shells) |
 | `my-info.md` | Content source (bio, socials, project list) |
 | `CHANGELOG.md` | Log of notable changes (Keep a Changelog format) |
 
 ## Where to change things
 
-- **Projects / content / planet look:** `lib/planets.ts` (add/edit entries in the `THEMES` array — id, name, description, link, tags, palette, rings). The `model` array picks which node(s) from `public/planets/various_planets.glb` render as that planet (e.g. `['planet_lava_7']`, or `['planet_smac_0', 'planet_smac_cloud_1']` for body + cloud). Model unit radius is 1.0; `Planet.tsx` scales by `radius`. Available nodes: `planet_smac_0`/`planet_smac_cloud_1`, `planet_gas_2`/`planet_gas_cloud_01_3`, `planet_continental_4`/`planet_continental_clouds_5`, `planet_frozen_6`, `planet_lava_7`, `planet_barren_8`, `planet_gas_cloud_02_9`. **System scale:** orbits are `1500 + i * 700` (≈1500–9200), planet radii `34 + (i % 4) * 14` (≈10–20× the ship's ~3.4-unit size), orbital speed `2 / Math.sqrt(orbit)` — bump these in the `PLANETS` map to resize the whole system. The sun (`Star.tsx`), skybox (`NightSky.tsx`), starfield (`Starfield.tsx`) and camera far plane (`Experience.tsx`) are sized to match.
+- **Projects / content / planet look:** `lib/planets.ts` (add/edit entries in the `THEMES` array — id, name, description, link, tags, palette, rings). Every planet is a clone of the single phoenix mesh from `public/planets/planet_of_phoenix.glb` (`Phoenix_LOD0__0`, body unit radius 22 — `BODY_UNIT_RADIUS` in `Planet.tsx` scales it to `radius`). All planets keep the GLB's original colors (no per-planet tint or emissive). The atmosphere is a faint white glow (`#eef2f8`, intensity 0.7) that fades with camera distance via the shader's `uFade` uniform — `smoothstep(radius*2, radius*10, dist)` updated in `Planet.tsx`'s `useFrame`, so it softens as you get closer and disappears near the surface. **System scale:** orbits are `1500 + i * 700` (≈1500–9200), planet radii `34 + (i % 4) * 14` (≈10–20× the ship's ~3.4-unit size), orbital speed `2 / Math.sqrt(orbit)` — bump these in the `PLANETS` map to resize the whole system. The sun (`Star.tsx`), skybox (`NightSky.tsx`), starfield (`Starfield.tsx`) and camera far plane (`Experience.tsx`) are sized to match.
 - **Flight feel:** `components/Ship.tsx` — `CHASE_OFFSET` (camera distance from ship center, y = height above the ship's center so the ship sits slightly low in frame), `CAM_LAG_K` (how quickly the camera orientation catches up to the ship's pitch/yaw; lower = more lag), `CHASE_LAG_MAX` (thrust slide-back cap), `LOOK_STICKINESS` (pitch/yaw smoothing), attitude lean constants (`ATT_PITCH_MAX`, `ATT_ROLL_MAX`, `ATT_RATE_FULL` — how far the hull pitches/banks into steering, cosmetic on the model only, camera doesn't follow), `HOME`, `accel`, `maxSpeed`, damping, mouse sensitivity (`e.movementX * 0.0022`).
 - **Planet collision:** the ship bounces off planet surfaces instead of passing through — `SURFACE_CLEARANCE` in `components/Ship.tsx` is the stop distance off the surface (9 units; big enough that the chase camera never clips the planet). On impact the ship is pushed to the surface, the inward velocity component is reflected/damped, and the camera shakes (`shake` ref, decayed per frame). Autopilot warp aborts if its path hits a planet.
 - **Ship model:** `public/ship/ship.glb` (swap the file to change the model). Orientation/scale via `MODEL_ROTATION` + `MODEL_SCALE` in `components/Ship.tsx`. The GLB's baked fly-around animation is not played (it tumbled the hull); the model rests at its authored pose.
 - **Info popup trigger distance:** `components/SolarSystem.tsx` (`p.radius * 3 + 30`).
 - **Lighting / bloom:** `components/Star.tsx` (point light) and `components/Effects.tsx` (`luminanceThreshold`, `intensity`).
+- **Motion blur:** speed-scaled warp blur. The ship writes its actual per-frame speed to `lib/motion.ts` (`motion.speed`, covers manual flight + warp); `components/Effects.tsx` maps it linearly to strength (`min(1, speed / 2000)` — proportional to current speed) and eases per frame (asymmetric: ramps up at rate 6, wears off at rate 60); `components/WarpBlur.tsx` is the shader (16 taps, `radius = strength * dist * 0.05` — bump the multiplier for more smear).
 - **HUD styling:** Tailwind classes in `components/HUD.tsx` + custom classes in `app/globals.css`. Fonts are loaded in `app/layout.tsx` via `next/font` (`Space Grotesk` → `var(--font-sans)`, `JetBrains Mono` → `var(--font-mono)`).
 
 ## Controls (for reference)
