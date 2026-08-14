@@ -211,8 +211,8 @@ export function Ship() {
 
     const onMove = (e: MouseEvent) => {
       if (document.pointerLockElement !== gl.domElement) return
-      look.current.y -= e.movementX * 0.0022
-      look.current.x -= e.movementY * 0.0022
+      look.current.y -= e.movementX * 0.0011
+      look.current.x -= e.movementY * 0.0011
       look.current.x = Math.max(-1.45, Math.min(1.45, look.current.x))
     }
 
