@@ -1,6 +1,6 @@
 ---
 name: glb-taming
-description: Work with GLB/GLTF 3D models you didn't author — inspect the node hierarchy and materials to identify what each part is, inventory and analyze animation tracks (including detecting unwanted baked-in motion like rolls), surgically filter animation clips to keep only the tracks you want, and hide/show or fade model parts at runtime. Use when playing with GLB/GLTF models: figuring out model structure, disabling or removing animations, isolating effect parts (fire, glows, rings), making parts appear conditionally, or debugging weird model behavior.
+description: "Work with GLB/GLTF 3D models you didn't author — inspect the node hierarchy and materials to identify what each part is, inventory and analyze animation tracks (including detecting unwanted baked-in motion like rolls), surgically filter animation clips to keep only the tracks you want, and hide/show or fade model parts at runtime. Use when playing with GLB/GLTF models: figuring out model structure, disabling or removing animations, isolating effect parts (fire, glows, rings), making parts appear conditionally, or debugging weird model behavior."
 ---
 
 # GLB Taming
