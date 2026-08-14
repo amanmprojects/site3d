@@ -4,6 +4,8 @@ All notable changes to this project are documented in this file.
 
 ## [Unreleased]
 
+- Fixed `THREE.GLTFLoader: Couldn't load texture "blob:..."` console errors in dev: the Sketchfab GLBs embedded multi-MB 4K PNGs (planet: four 14–15MB maps, 51MB total; ship: a 13.2MB PNG, 21MB total), and GLTFLoader decodes each embedded image via a blob: URL + `createImageBitmap`, which fails intermittently on large images (known three.js/browser behavior; reported with ~40MB GLBs regardless of browser). Re-encoded and repacked the textures with the new `scripts/optimize-glb.mjs` (ImageMagick): color maps → JPEG q88–90, normal/specular maps → downscaled 2048px lossless PNG, everything ≤ 4096px. Planet GLB 51.5MB → 9.8MB, ship GLB 21MB → 7.1MB; geometry, materials, animations and the GLB workflow are untouched. Run the script again after swapping in any new Sketchfab GLB.
+
 - New agent skill `glb-taming` (`.agents/skills/glb-taming/`): inspect GLB/GLTF models you didn't author — node hierarchy, per-mesh bounds/materials, and per-track animation stats with baked-motion detection (quaternion deviation angle + axis finds rolls baked into every track); includes the `inspect-glb.mjs` script and clip-filtering / runtime part-control patterns from the ship work.
 
 - Warp blur disabled: the speed-scaled radial smear (`components/WarpBlur.tsx`) is no longer mounted in the effect chain (`components/Effects.tsx` is now Bloom → Noise → Vignette). It quietly destroyed the scene's glow at any nonzero speed — the sun, thruster fire and reflections all looked dramatically better at exactly zero speed because the blur was smearing them radially the rest of the time.
