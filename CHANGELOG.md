@@ -4,6 +4,12 @@ All notable changes to this project are documented in this file.
 
 ## [Unreleased]
 
+- Planets are now visually distinct again. Each planet clones its materials (so the shared `planet_of_phoenix.glb` nodes are never mutated) and applies a per-project tint from `palette`: the body is hue-shifted toward `palette.mid` (lerped 40% toward white so the phoenix surface stays readable), `emissive` uses `palette.emissive`/`palette.atmosphere`, and roughness/metalness/`toneMapped` come from a per-`type` preset (rocky/gas/ice/lava/ocean/tech). Lava and tech planets pulse their emissive intensity, and their `toneMapped=false` lets Bloom pick up the glow. (`components/Planet.tsx`, `lib/planets.ts`)
+
+- Atmosphere glow is back: a back-side, additively-blended fresnel-rim shader (`createAtmosphereMaterial` in `lib/geometry.ts`, `uColor` from `palette.atmosphere`) on a sphere ~12% larger than the body, fading with camera distance (`smoothstep(radius*2, radius*10, dist)` — visible from afar, gone near the surface). Rocky planets get a dimmer halo.
+
+- Planet rings return as an opt-in (`rings?: boolean` on `PlanetDef`/`Theme`, set on purr, grok-token-tracker, chess and kairo). The ring is a `RingGeometry` with remapped UVs (so the square band texture maps radially) textured by `createRingTexture` (`lib/geometry.ts`) and tinted with `palette.high`. (`components/Planet.tsx`, `lib/planets.ts`)
+
 - Mouse look sensitivity halved: pitch/yaw turn rate is now `e.movementX/Y * 0.0011` (was `0.0022`) in `components/Ship.tsx`, so the ship responds to mouse movement at half the previous rate.
 
 - Fixed `THREE.GLTFLoader: Couldn't load texture "blob:..."` console errors in dev: the Sketchfab GLBs embedded multi-MB 4K PNGs (planet: four 14–15MB maps, 51MB total; ship: a 13.2MB PNG, 21MB total), and GLTFLoader decodes each embedded image via a blob: URL + `createImageBitmap`, which fails intermittently on large images (known three.js/browser behavior; reported with ~40MB GLBs regardless of browser). Re-encoded and repacked the textures with the new `scripts/optimize-glb.mjs` (ImageMagick): color maps → JPEG q88–90, normal/specular maps → downscaled 2048px lossless PNG, everything ≤ 4096px. Planet GLB 51.5MB → 9.8MB, ship GLB 21MB → 7.1MB; geometry, materials, animations and the GLB workflow are untouched. Run the script again after swapping in any new Sketchfab GLB.
