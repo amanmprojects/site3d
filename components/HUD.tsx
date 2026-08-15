@@ -7,6 +7,7 @@ import { requestLock, requestUnlock } from '@/lib/controls'
 import { planetRegistry } from '@/lib/planetRegistry'
 import { sceneRef } from '@/lib/scene'
 import { PLANETS, projectById } from '@/lib/planets'
+import { startAudio, setAudioMuted, audioScanChime, audioWarpWhoosh } from '@/lib/audio'
 
 function TargetIndicator() {
   const markerRef = useRef<HTMLDivElement>(null)
@@ -72,6 +73,7 @@ function Intro({ onWarp }: { onWarp: (id: string) => void }) {
     const onKey = (e: KeyboardEvent) => {
       if (e.code === 'Space' && !e.repeat) {
         e.preventDefault()
+        startAudio()
         requestLock()
       }
     }
@@ -106,7 +108,10 @@ function Intro({ onWarp }: { onWarp: (id: string) => void }) {
 
         <button
           type="button"
-          onClick={() => requestLock()}
+          onClick={() => {
+            startAudio()
+            requestLock()
+          }}
           className="mono panel corner mt-7 px-10 py-3 text-sm uppercase tracking-[0.35em] text-amber-200 transition hover:text-white hover:border-amber-300/60 hud-glow"
         >
           Launch
@@ -146,7 +151,9 @@ export function HUD() {
   const locked = useApp((s) => s.locked)
   const infoId = useApp((s) => s.infoId)
   const speed = useApp((s) => s.speed)
+  const muted = useApp((s) => s.muted)
   const requestWarp = useApp((s) => s.requestWarp)
+  const toggleMuted = useApp((s) => s.toggleMuted)
 
   const info = infoId ? projectById(infoId) : null
 
@@ -164,7 +171,26 @@ export function HUD() {
     return () => window.removeEventListener('keydown', onKey)
   }, [])
 
+  const prevInfo = useRef<string | null>(null)
+  useEffect(() => {
+    if (infoId && infoId !== prevInfo.current) audioScanChime()
+    prevInfo.current = infoId
+  }, [infoId])
+
+  const prevWarp = useRef<string | null>(null)
+  useEffect(() => {
+    const unsub = useApp.subscribe((s, prev) => {
+      if (s.warpTo && s.warpTo !== prev.warpTo) audioWarpWhoosh()
+    })
+    return unsub
+  }, [])
+
+  useEffect(() => {
+    setAudioMuted(muted)
+  }, [muted])
+
   const handleWarp = (id: string) => {
+    startAudio()
     requestWarp(id)
     requestLock()
   }
@@ -187,6 +213,17 @@ export function HUD() {
               Aman Mehtar
             </div>
           </div>
+
+          {/* top-right mute toggle */}
+          <button
+            type="button"
+            onClick={toggleMuted}
+            className="mono pointer-events-auto absolute right-5 top-5 text-xs uppercase tracking-[0.3em] text-sky-300/50 transition hover:text-amber-200/90"
+            aria-label={muted ? 'Unmute audio' : 'Mute audio'}
+            aria-pressed={muted}
+          >
+            {muted ? 'sound off' : 'sound on'}
+          </button>
 
           {/* bottom-left hints */}
           <div className="mono absolute bottom-5 left-5 text-xs uppercase leading-relaxed tracking-[0.3em] text-sky-300/40">
