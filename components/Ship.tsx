@@ -9,6 +9,7 @@ import { requestLock, setLockImpl } from '@/lib/controls'
 import { planetRegistry } from '@/lib/planetRegistry'
 import { sceneRef } from '@/lib/scene'
 import { motion } from '@/lib/motion'
+import { touchInput, isTouchDevice } from '@/lib/touchInput'
 
 const keys = {
   fwd: false,
@@ -278,7 +279,9 @@ export function Ship() {
 
   useFrame((_, deltaRaw) => {
     const delta = Math.min(deltaRaw, 0.05)
-    const locked = document.pointerLockElement === gl.domElement
+    const pointerLocked = document.pointerLockElement === gl.domElement
+    const touchLocked = isTouchDevice() && useApp.getState().locked
+    const locked = pointerLocked || touchLocked
     const ship = shipRef.current
     if (!ship) return
 
@@ -338,6 +341,12 @@ export function Ship() {
     } else if (locked) {
       _fwd.set(0, 0, -1).applyQuaternion(ship.quaternion)
 
+      if (touchLocked) {
+        look.current.x -= touchInput.steerY * 1.6 * delta
+        look.current.y -= touchInput.steerX * 1.6 * delta
+        look.current.x = Math.max(-1.45, Math.min(1.45, look.current.x))
+      }
+
       if (keys.pitchUp) look.current.x += 1.3 * delta
       if (keys.pitchDown) look.current.x -= 1.3 * delta
       look.current.x = Math.max(-1.45, Math.min(1.45, look.current.x))
@@ -354,7 +363,7 @@ export function Ship() {
       if (keys.left) yawInput -= 1
       look.current.y -= yawInput * 1.6 * delta
 
-      const boosting = keys.boost
+      const boosting = keys.boost || touchInput.boost
       const maxSpeed = boosting ? BOOST_MAX_SPEED : MAX_SPEED
       const spd = vel.current.length()
       if (spd > 0.5) {
@@ -370,8 +379,8 @@ export function Ship() {
       const throttle = 1 - Math.min(1, (spd / maxSpeed) ** 2)
 
       _acc.set(0, 0, 0)
-      if (keys.fwd) _acc.addScaledVector(_fwd, (boosting ? BOOST_ACCEL : ACCEL) * throttle)
-      if (keys.brake && spd > 0.01) _acc.addScaledVector(vel.current, -BRAKE_ACCEL / spd)
+      if (keys.fwd || touchInput.thrust) _acc.addScaledVector(_fwd, (boosting ? BOOST_ACCEL : ACCEL) * throttle)
+      if ((keys.brake || touchInput.brake) && spd > 0.01) _acc.addScaledVector(vel.current, -BRAKE_ACCEL / spd)
 
       vel.current.addScaledVector(_acc, delta)
       if (!boosting && spd > MAX_SPEED) {
