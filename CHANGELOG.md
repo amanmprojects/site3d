@@ -4,6 +4,8 @@ All notable changes to this project are documented in this file.
 
 ## [Unreleased]
 
+- Audio: a thin Web Audio layer (synthesized, no asset files). An engine hum whose gain + pitch track the ship's speed via `motion.speed`, a filtered-noise boost roar that ramps in above cruise, a sine + LFO warp drone while autopilot-warping, and a low ambient pad. A two-note scan chime fires when a planet's info panel opens (`setInfo`), and a noise-sweep whoosh fires on warp start. `muted` state in the Zustand store + a top-right "sound on/off" toggle in the HUD (`pointer-events-auto`). Audio is lazily created and resumed on the first user gesture (the Launch button / Space) to satisfy autoplay policy. (`lib/audio.ts`, `lib/store.ts`, `components/HUD.tsx`)
+
 - Mouse look sensitivity halved: pitch/yaw turn rate is now `e.movementX/Y * 0.0011` (was `0.0022`) in `components/Ship.tsx`, so the ship responds to mouse movement at half the previous rate.
 
 - Fixed `THREE.GLTFLoader: Couldn't load texture "blob:..."` console errors in dev: the Sketchfab GLBs embedded multi-MB 4K PNGs (planet: four 14–15MB maps, 51MB total; ship: a 13.2MB PNG, 21MB total), and GLTFLoader decodes each embedded image via a blob: URL + `createImageBitmap`, which fails intermittently on large images (known three.js/browser behavior; reported with ~40MB GLBs regardless of browser). Re-encoded and repacked the textures with the new `scripts/optimize-glb.mjs` (ImageMagick): color maps → JPEG q88–90, normal/specular maps → downscaled 2048px lossless PNG, everything ≤ 4096px. Planet GLB 51.5MB → 9.8MB, ship GLB 21MB → 7.1MB; geometry, materials, animations and the GLB workflow are untouched. Run the script again after swapping in any new Sketchfab GLB.
