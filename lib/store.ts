@@ -17,6 +17,9 @@ interface AppState {
 
   speed: number
   setSpeed: (n: number) => void
+
+  muted: boolean
+  toggleMuted: () => void
 }
 
 export const useApp = create<AppState>((set) => ({
@@ -41,4 +44,7 @@ export const useApp = create<AppState>((set) => ({
 
   speed: 0,
   setSpeed: (n) => set((s) => (s.speed === n ? s : { speed: n })),
+
+  muted: false,
+  toggleMuted: () => set((s) => ({ muted: !s.muted })),
 }))
