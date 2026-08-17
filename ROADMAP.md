@@ -30,7 +30,7 @@ user gesture (Launch / Space) to satisfy autoplay policy.
 Files: `lib/audio.ts` (new), `lib/store.ts`, `components/HUD.tsx`.
 Branch: `phase2/audio`.
 
-### Pillar 3a — Touch controls + navigation aids  ·  **Planned**
+### Pillar 3a — Touch controls + navigation aids  ·  **SHIPPED (PR #3)**
 
 Virtual stick (steer) + thrust/boost buttons, optional gyro; pointer-lock path
 gated behind a touch check so desktop mouse/keyboard is untouched. A corner
@@ -60,7 +60,7 @@ links preview correctly.
 
 1. **PR-1** — Pillar 1 (distinctive planets)  ·  shipped
 2. **PR-2** — Pillar 2 (audio)  ·  shipped
-3. **PR-3** — Pillar 3a (touch + nav aids)
+3. **PR-3** — Pillar 3a (touch + nav aids)  ·  shipped  ·  shipped
 4. **PR-4** — Pillar 3b (live GitHub content)
 5. **PR-5** — Pillar 4 (polish/perf/a11y)
 

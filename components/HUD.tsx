@@ -157,6 +157,8 @@ export function HUD() {
   const muted = useApp((s) => s.muted)
   const requestWarp = useApp((s) => s.requestWarp)
   const toggleMuted = useApp((s) => s.toggleMuted)
+  const setLocked = useApp((s) => s.setLocked)
+  const cancelWarp = useApp((s) => s.cancelWarp)
 
   const info = infoId ? projectById(infoId) : null
 
@@ -220,16 +222,30 @@ export function HUD() {
             </div>
           </div>
 
-          {/* top-right mute toggle */}
-          <button
-            type="button"
-            onClick={toggleMuted}
-            className="mono pointer-events-auto absolute right-5 top-5 text-xs uppercase tracking-[0.3em] text-sky-300/50 transition hover:text-amber-200/90"
-            aria-label={muted ? 'Unmute audio' : 'Mute audio'}
-            aria-pressed={muted}
-          >
-            {muted ? 'sound off' : 'sound on'}
-          </button>
+          {/* top-right controls */}
+          <div className="pointer-events-auto absolute right-5 top-5 flex items-center gap-4">
+            {isTouchDevice() && (
+              <button
+                type="button"
+                onClick={() => {
+                  cancelWarp()
+                  setLocked(false)
+                }}
+                className="mono text-xs uppercase tracking-[0.3em] text-sky-300/50 transition hover:text-amber-200/90"
+              >
+                exit
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={toggleMuted}
+              className="mono text-xs uppercase tracking-[0.3em] text-sky-300/50 transition hover:text-amber-200/90"
+              aria-label={muted ? 'Unmute audio' : 'Mute audio'}
+              aria-pressed={muted}
+            >
+              {muted ? 'sound off' : 'sound on'}
+            </button>
+          </div>
 
           {/* bottom-left hints */}
           <div className="mono absolute bottom-5 left-5 text-xs uppercase leading-relaxed tracking-[0.3em] text-sky-300/40">

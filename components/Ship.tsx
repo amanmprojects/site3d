@@ -145,7 +145,13 @@ export function Ship() {
 
   useEffect(() => {
     sceneRef.camera = camera as THREE.PerspectiveCamera
-    setLockImpl(() => gl.domElement.requestPointerLock())
+    setLockImpl(() => {
+      if (isTouchDevice()) {
+        setLocked(true)
+        return
+      }
+      return gl.domElement.requestPointerLock()
+    })
     camQ.current.copy(shipRef.current?.quaternion ?? new THREE.Quaternion())
     lastPitch.current = euler.current.x
 
