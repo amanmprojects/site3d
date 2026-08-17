@@ -8,6 +8,9 @@ import { planetRegistry } from '@/lib/planetRegistry'
 import { sceneRef } from '@/lib/scene'
 import { PLANETS, projectById } from '@/lib/planets'
 import { startAudio, setAudioMuted, audioScanChime, audioWarpWhoosh } from '@/lib/audio'
+import { TouchControls } from '@/components/TouchControls'
+import { Radar } from '@/components/Radar'
+import { isTouchDevice } from '@/lib/touchInput'
 
 function TargetIndicator() {
   const markerRef = useRef<HTMLDivElement>(null)
@@ -206,6 +209,9 @@ export function HUD() {
             <div className="crosshair-dot h-1.5 w-1.5 rounded-full bg-amber-200/90" />
             <div className="absolute left-1/2 top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border border-sky-300/30" />
           </div>
+
+          <Radar />
+          {isTouchDevice() && <TouchControls />}
 
           {/* top-left identity */}
           <div className="absolute left-5 top-5">
