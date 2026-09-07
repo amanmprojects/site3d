@@ -1,4 +1,5 @@
 import { mulberry32 } from './noise'
+import repoDataJson from './repoData.json'
 
 export type PlanetType = 'rocky' | 'gas' | 'ice' | 'lava' | 'ocean' | 'tech'
 
@@ -8,6 +9,29 @@ export interface Palette {
   high: string
   atmosphere: string
   emissive?: string
+}
+
+export interface RepoMeta {
+  stars: number
+  forks: number
+  issues: number
+  language: string | null
+  pushedAt: string | null
+  archived: boolean
+  homepage: string | null
+  description: string | null
+}
+
+interface RepoData {
+  fetchedAt: string | null
+  repos: Record<string, RepoMeta>
+}
+
+const repoData = repoDataJson as RepoData
+
+export function repoMeta(link: string): RepoMeta | null {
+  const slug = link.replace(/^https:\/\/github\.com\//, '').replace(/\/$/, '')
+  return repoData.repos[slug] ?? null
 }
 
 export interface PlanetDef {
@@ -25,6 +49,8 @@ export interface PlanetDef {
   inclination: [number, number]
   spin: number
   seed: number
+  rings?: boolean
+  repo: RepoMeta | null
 }
 
 interface Theme {
@@ -35,6 +61,7 @@ interface Theme {
   tags: string[]
   type: PlanetType
   palette: Palette
+  rings?: boolean
 }
 
 const THEMES: Theme[] = [
@@ -97,6 +124,7 @@ const THEMES: Theme[] = [
     tags: ['browser dev env', 'WASM', 'bash', 'sandbox'],
     type: 'ocean',
     palette: { low: '#062e3a', mid: '#0e7a6b', high: '#7fe0b0', atmosphere: '#34d399' },
+    rings: true,
   },
   {
     id: 'lunaeye',
@@ -137,6 +165,7 @@ const THEMES: Theme[] = [
     tags: ['tokens', 'usage tracking', 'tooling'],
     type: 'lava',
     palette: { low: '#2a1205', mid: '#8a4a12', high: '#fbbf24', atmosphere: '#fbbf24', emissive: '#f59e0b' },
+    rings: true,
   },
   {
     id: 'chess',
@@ -147,6 +176,7 @@ const THEMES: Theme[] = [
     tags: ['chess engine', 'JavaScript', 'search'],
     type: 'gas',
     palette: { low: '#6b4a1a', mid: '#c9a34a', high: '#f5e6c4', atmosphere: '#e0b35a' },
+    rings: true,
   },
   {
     id: 'kairo',
@@ -157,6 +187,7 @@ const THEMES: Theme[] = [
     tags: ['experiment', 'WIP', '???'],
     type: 'tech',
     palette: { low: '#0a0a12', mid: '#2a1a4a', high: '#e879f9', atmosphere: '#e879f9', emissive: '#d946ef' },
+    rings: true,
   },
 ]
 
@@ -187,6 +218,8 @@ export const PLANETS: PlanetDef[] = THEMES.map((t, i) => {
     inclination,
     spin,
     seed,
+    rings: t.rings,
+    repo: repoMeta(t.link),
   }
 })
 

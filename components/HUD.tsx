@@ -11,6 +11,30 @@ import { startAudio, setAudioMuted, audioScanChime, audioWarpWhoosh } from '@/li
 import { TouchControls } from '@/components/TouchControls'
 import { Radar } from '@/components/Radar'
 import { isTouchDevice } from '@/lib/touchInput'
+import { QUALITY_ORDER, SETTINGS_KEYS } from '@/lib/quality'
+
+function timeAgo(iso: string | null) {
+  if (!iso) return null
+  const days = Math.floor((Date.now() - new Date(iso).getTime()) / 86400000)
+  if (days <= 0) return 'today'
+  if (days === 1) return 'yesterday'
+  if (days < 30) return `${days}d ago`
+  const months = Math.floor(days / 30)
+  if (months < 12) return `${months}mo ago`
+  return `${Math.floor(months / 12)}y ago`
+}
+
+function repoStats(repo: NonNullable<ReturnType<typeof projectById>>['repo']) {
+  if (!repo) return null
+  const parts = [
+    repo.language,
+    repo.stars > 0 ? `★ ${repo.stars}` : null,
+    repo.forks > 0 ? `${repo.forks} forks` : null,
+    timeAgo(repo.pushedAt) ? `pushed ${timeAgo(repo.pushedAt)}` : null,
+    repo.archived ? 'archived' : null,
+  ].filter(Boolean)
+  return parts.length ? parts.join(' · ') : null
+}
 
 function TargetIndicator() {
   const markerRef = useRef<HTMLDivElement>(null)
@@ -72,6 +96,11 @@ function TargetIndicator() {
 }
 
 function Intro({ onWarp }: { onWarp: (id: string) => void }) {
+  const muted = useApp((s) => s.muted)
+  const quality = useApp((s) => s.quality)
+  const reducedMotion = useApp((s) => s.reducedMotion)
+  const gridRef = useRef<HTMLDivElement>(null)
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.code === 'Space' && !e.repeat) {
@@ -83,6 +112,25 @@ function Intro({ onWarp }: { onWarp: (id: string) => void }) {
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [])
+
+  const onGridKeyDown = (e: React.KeyboardEvent) => {
+    const dirs: Record<string, number> = {
+      ArrowLeft: -1,
+      ArrowRight: 1,
+      ArrowUp: -3,
+      ArrowDown: 3,
+    }
+    const delta = dirs[e.key]
+    if (!delta) return
+    e.preventDefault()
+    const grid = gridRef.current
+    if (!grid) return
+    const buttons = Array.from(grid.querySelectorAll<HTMLButtonElement>('button'))
+    const idx = buttons.indexOf(document.activeElement as HTMLButtonElement)
+    const base = idx === -1 ? 0 : idx
+    const next = Math.max(0, Math.min(buttons.length - 1, base + delta))
+    buttons[next]?.focus()
+  }
 
   return (
     <div className="pointer-events-auto absolute inset-0 z-30 flex flex-col items-center justify-between bg-black/60 backdrop-blur-[2px]">
@@ -111,6 +159,7 @@ function Intro({ onWarp }: { onWarp: (id: string) => void }) {
 
         <button
           type="button"
+          autoFocus
           onClick={() => {
             startAudio()
             requestLock()
@@ -122,13 +171,53 @@ function Intro({ onWarp }: { onWarp: (id: string) => void }) {
         <div className="mono mt-3 text-xs uppercase tracking-[0.3em] text-sky-300/40">
           or press space
         </div>
+
+        <div className="mono mt-5 flex items-center justify-center gap-5 text-xs uppercase tracking-[0.3em]">
+          <button
+            type="button"
+            onClick={() => useApp.getState().toggleMuted()}
+            className="text-sky-300/50 transition hover:text-amber-200/90"
+            aria-label={muted ? 'Unmute audio' : 'Mute audio'}
+            aria-pressed={muted}
+          >
+            {muted ? 'sound off' : 'sound on'}
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              const order = QUALITY_ORDER
+              useApp
+                .getState()
+                .setQuality(order[(order.indexOf(useApp.getState().quality) + 1) % order.length])
+            }}
+            className="text-sky-300/50 transition hover:text-amber-200/90"
+            aria-label={`Graphics quality: ${quality}. Click to change`}
+          >
+            gfx {quality}
+          </button>
+          <button
+            type="button"
+            onClick={() =>
+              useApp.getState().setReducedMotion(!useApp.getState().reducedMotion)
+            }
+            className="text-sky-300/50 transition hover:text-amber-200/90"
+            aria-label={reducedMotion ? 'Enable motion effects' : 'Reduce motion effects'}
+            aria-pressed={reducedMotion}
+          >
+            {reducedMotion ? 'motion off' : 'motion on'}
+          </button>
+        </div>
       </div>
 
       <div className="w-full max-w-5xl px-6 pb-8">
         <div className="mono mb-3 text-center text-xs uppercase tracking-[0.4em] text-sky-300/50">
           Select a planet to autopilot
         </div>
-        <div className="grid max-h-[36vh] grid-cols-2 gap-2 overflow-y-auto md:grid-cols-3 lg:grid-cols-4">
+        <div
+          ref={gridRef}
+          onKeyDown={onGridKeyDown}
+          className="grid max-h-[36vh] grid-cols-2 gap-2 overflow-y-auto md:grid-cols-3 lg:grid-cols-4"
+        >
           {PLANETS.map((p) => (
             <button
               key={p.id}
@@ -139,11 +228,139 @@ function Intro({ onWarp }: { onWarp: (id: string) => void }) {
               <span className="mono text-sm uppercase tracking-widest text-sky-100 group-hover:text-amber-200">
                 {p.name}
               </span>
-              <span className="mono truncate text-xs uppercase tracking-wider text-sky-300/50">
-                {p.tags[0] ?? p.type}
+              <span className="mono flex w-full items-center justify-between gap-2 text-xs uppercase tracking-wider text-sky-300/50">
+                <span className="truncate">{p.tags[0] ?? p.type}</span>
+                {p.repo?.language && (
+                  <span className="shrink-0 text-sky-300/40">{p.repo.language}</span>
+                )}
               </span>
             </button>
           ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function SystemMap({ onWarp }: { onWarp: (id: string) => void }) {
+  const muted = useApp((s) => s.muted)
+  const quality = useApp((s) => s.quality)
+  const reducedMotion = useApp((s) => s.reducedMotion)
+  const gridRef = useRef<HTMLDivElement>(null)
+
+  const close = () => {
+    useApp.getState().setMapOpen(false)
+    requestLock()
+  }
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.code !== 'KeyM' && e.code !== 'Escape') return
+      e.preventDefault()
+      useApp.getState().setMapOpen(false)
+      if (e.code === 'KeyM') requestLock()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
+
+  const onGridKeyDown = (e: React.KeyboardEvent) => {
+    const dirs: Record<string, number> = {
+      ArrowLeft: -1,
+      ArrowRight: 1,
+      ArrowUp: -3,
+      ArrowDown: 3,
+    }
+    const delta = dirs[e.key]
+    if (!delta) return
+    e.preventDefault()
+    const grid = gridRef.current
+    if (!grid) return
+    const buttons = Array.from(grid.querySelectorAll<HTMLButtonElement>('button'))
+    const idx = buttons.indexOf(document.activeElement as HTMLButtonElement)
+    const base = idx === -1 ? 0 : idx
+    const next = Math.max(0, Math.min(buttons.length - 1, base + delta))
+    buttons[next]?.focus()
+  }
+
+  return (
+    <div className="pointer-events-auto absolute inset-0 z-30 flex flex-col items-center justify-center bg-black/70 px-6 backdrop-blur-[2px]">
+      <div className="w-full max-w-4xl">
+        <div className="mono mb-4 flex items-center justify-between text-xs uppercase tracking-[0.4em] text-sky-300/60 hud-glow">
+          <span>System map — select a planet to autopilot</span>
+          <span className="text-sky-300/40">M — close</span>
+        </div>
+        <div
+          ref={gridRef}
+          onKeyDown={onGridKeyDown}
+          className="grid max-h-[60vh] grid-cols-2 gap-2 overflow-y-auto md:grid-cols-3 lg:grid-cols-4"
+        >
+          {PLANETS.map((p, i) => (
+            <button
+              key={p.id}
+              type="button"
+              onClick={() => onWarp(p.id)}
+              className="panel corner group flex flex-col items-start gap-1 px-4 py-3 text-left transition hover:border-amber-300/50"
+            >
+              <span className="mono flex w-full items-center justify-between text-sm uppercase tracking-widest text-sky-100 group-hover:text-amber-200">
+                <span className="truncate">{p.name}</span>
+                <span className="ml-2 shrink-0 text-sky-300/30">
+                  {String(i + 1).padStart(2, '0')}
+                </span>
+              </span>
+              <span className="mono flex w-full items-center justify-between gap-2 text-xs uppercase tracking-wider text-sky-300/50">
+                <span className="truncate">{p.tags[0] ?? p.type}</span>
+                {p.repo?.language && (
+                  <span className="shrink-0 text-sky-300/40">{p.repo.language}</span>
+                )}
+              </span>
+            </button>
+          ))}
+        </div>
+        <div className="mono mt-4 flex items-center justify-center gap-5 text-xs uppercase tracking-[0.3em]">
+          <button
+            type="button"
+            onClick={close}
+            className="text-sky-300/50 transition hover:text-amber-200/90"
+          >
+            back to flight
+          </button>
+        </div>
+
+        <div className="mono mt-6 flex items-center justify-center gap-5 text-xs uppercase tracking-[0.3em]">
+          <button
+            type="button"
+            onClick={() => useApp.getState().toggleMuted()}
+            className="text-sky-300/50 transition hover:text-amber-200/90"
+            aria-label={muted ? 'Unmute audio' : 'Mute audio'}
+            aria-pressed={muted}
+          >
+            {muted ? 'sound off' : 'sound on'}
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              const order = QUALITY_ORDER
+              useApp
+                .getState()
+                .setQuality(order[(order.indexOf(useApp.getState().quality) + 1) % order.length])
+            }}
+            className="text-sky-300/50 transition hover:text-amber-200/90"
+            aria-label={`Graphics quality: ${quality}. Click to change`}
+          >
+            gfx {quality}
+          </button>
+          <button
+            type="button"
+            onClick={() =>
+              useApp.getState().setReducedMotion(!useApp.getState().reducedMotion)
+            }
+            className="text-sky-300/50 transition hover:text-amber-200/90"
+            aria-label={reducedMotion ? 'Enable motion effects' : 'Reduce motion effects'}
+            aria-pressed={reducedMotion}
+          >
+            {reducedMotion ? 'motion off' : 'motion on'}
+          </button>
         </div>
       </div>
     </div>
@@ -155,12 +372,45 @@ export function HUD() {
   const infoId = useApp((s) => s.infoId)
   const speed = useApp((s) => s.speed)
   const muted = useApp((s) => s.muted)
+  const quality = useApp((s) => s.quality)
+  const reducedMotion = useApp((s) => s.reducedMotion)
   const requestWarp = useApp((s) => s.requestWarp)
   const toggleMuted = useApp((s) => s.toggleMuted)
   const setLocked = useApp((s) => s.setLocked)
   const cancelWarp = useApp((s) => s.cancelWarp)
+  const setQuality = useApp((s) => s.setQuality)
+  const mapOpen = useApp((s) => s.mapOpen)
+  const cycleQuality = () => {
+    const next = QUALITY_ORDER[(QUALITY_ORDER.indexOf(useApp.getState().quality) + 1) % QUALITY_ORDER.length]
+    setQuality(next)
+  }
+  const toggleReducedMotion = () =>
+    useApp.getState().setReducedMotion(!useApp.getState().reducedMotion)
 
   const info = infoId ? projectById(infoId) : null
+
+  useEffect(() => {
+    useApp.getState().initSettings()
+    return useApp.subscribe((s, prev) => {
+      if (
+        s.quality === prev.quality &&
+        s.muted === prev.muted &&
+        s.reducedMotion === prev.reducedMotion
+      )
+        return
+      try {
+        localStorage.setItem(SETTINGS_KEYS.quality, s.quality)
+        localStorage.setItem(SETTINGS_KEYS.muted, s.muted ? '1' : '0')
+        localStorage.setItem(SETTINGS_KEYS.motion, s.reducedMotion ? '0' : '1')
+      } catch {
+        /* private mode */
+      }
+    })
+  }, [])
+
+  useEffect(() => {
+    document.documentElement.classList.toggle('reduced-motion', reducedMotion)
+  }, [reducedMotion])
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -170,6 +420,11 @@ export function HUD() {
           const p = projectById(state.infoId)
           if (p) window.open(p.link, '_blank', 'noopener')
         }
+      } else if (e.code === 'KeyM') {
+        const state = useApp.getState()
+        if (!state.locked || state.mapOpen) return
+        state.setMapOpen(true)
+        requestUnlock()
       }
     }
     window.addEventListener('keydown', onKey)
@@ -196,6 +451,7 @@ export function HUD() {
 
   const handleWarp = (id: string) => {
     startAudio()
+    useApp.getState().setMapOpen(false)
     requestWarp(id)
     requestLock()
   }
@@ -214,6 +470,7 @@ export function HUD() {
 
           <Radar />
           {isTouchDevice() && <TouchControls />}
+          {mapOpen && <SystemMap onWarp={handleWarp} />}
 
           {/* top-left identity */}
           <div className="absolute left-5 top-5">
@@ -238,6 +495,23 @@ export function HUD() {
             )}
             <button
               type="button"
+              onClick={toggleReducedMotion}
+              className="mono text-xs uppercase tracking-[0.3em] text-sky-300/50 transition hover:text-amber-200/90"
+              aria-label={reducedMotion ? 'Enable motion effects' : 'Reduce motion effects'}
+              aria-pressed={reducedMotion}
+            >
+              {reducedMotion ? 'motion off' : 'motion on'}
+            </button>
+            <button
+              type="button"
+              onClick={cycleQuality}
+              className="mono text-xs uppercase tracking-[0.3em] text-sky-300/50 transition hover:text-amber-200/90"
+              aria-label={`Graphics quality: ${quality}. Click to change`}
+            >
+              gfx {quality}
+            </button>
+            <button
+              type="button"
               onClick={toggleMuted}
               className="mono text-xs uppercase tracking-[0.3em] text-sky-300/50 transition hover:text-amber-200/90"
               aria-label={muted ? 'Unmute audio' : 'Mute audio'}
@@ -251,7 +525,7 @@ export function HUD() {
           <div className="mono absolute bottom-5 left-5 text-xs uppercase leading-relaxed tracking-[0.3em] text-sky-300/40">
             Mouse steer · W/S thrust/brake · A/D roll · Shift/Space boost · R reset
             <br />
-            Esc release · Enter open project
+            M system map · Esc release · Enter open project
           </div>
 
           {/* bottom-right speed */}
@@ -298,11 +572,25 @@ export function HUD() {
                 <p className="mt-3 text-base leading-relaxed text-sky-100/75">
                   {info.description}
                 </p>
+                {repoStats(info.repo) && (
+                  <div
+                    className="mono mt-3 flex flex-wrap items-center gap-x-2 text-xs uppercase tracking-wider text-sky-300/60"
+                    suppressHydrationWarning
+                  >
+                    <span className="text-sky-300/30">live</span>
+                    <span>{repoStats(info.repo)}</span>
+                  </div>
+                )}
                 <div className="mono mt-4 flex items-center justify-between text-sm uppercase tracking-widest">
                   <span className="text-sky-300/50">{info.link.replace('https://', '')}</span>
-                  <span className="text-amber-200/90 hud-glow">
-                    Enter — open project
-                  </span>
+                  <a
+                    href={info.link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="pointer-events-auto text-amber-200/90 transition hover:text-white hud-glow"
+                  >
+                    open project ↗
+                  </a>
                 </div>
               </div>
             </div>

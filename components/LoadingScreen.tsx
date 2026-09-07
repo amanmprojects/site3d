@@ -8,6 +8,8 @@ const ITEM_LABELS: Record<string, string> = {
   '/ship/ship.glb': 'starship hull',
   '/sun/stroming_sun.glb': 'solar core',
   '/sky/NightSkyHDRI008_8K.jpg': 'deep-space survey',
+  '/sky/NightSkyHDRI008_4K.jpg': 'deep-space survey',
+  '/sky/NightSkyHDRI008_2K.jpg': 'deep-space survey',
 }
 
 export function LoadingScreen() {

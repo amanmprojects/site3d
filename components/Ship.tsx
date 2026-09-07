@@ -229,6 +229,8 @@ export function Ship() {
         setLocked(true)
       } else if (exitIntentional.current) {
         exitIntentional.current = false
+        useApp.getState().cancelWarp()
+        useApp.getState().setMapOpen(false)
         setLocked(false)
       }
     }
@@ -258,6 +260,7 @@ export function Ship() {
       if (e.button !== 0) return
       if (document.visibilityState !== 'visible') return
       if (document.pointerLockElement === gl.domElement) return
+      if (useApp.getState().mapOpen) return
       if (useApp.getState().locked) requestLock()
     }
 
@@ -456,7 +459,7 @@ export function Ship() {
 
     _offset.copy(CHASE_OFFSET).applyQuaternion(ship.quaternion)
     _target.copy(ship.position).add(_offset).addScaledVector(_fwd, -camLag.current)
-    if (shake.current > 0.003) {
+    if (shake.current > 0.003 && !useApp.getState().reducedMotion) {
       _tmp.set(
         (Math.random() - 0.5) * 2,
         (Math.random() - 0.5) * 2,

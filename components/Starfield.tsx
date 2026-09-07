@@ -1,10 +1,12 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { mulberry32 } from '@/lib/noise'
 import { createStarfieldMaterial } from '@/lib/geometry'
+import { useApp } from '@/lib/store'
+import { QUALITY } from '@/lib/quality'
 
 const FIELD_COUNT = 2400000
 const FIELD_RADIUS = 48000
@@ -31,15 +33,15 @@ export function starColor(rng: () => number, out: Float32Array, i: number) {
   }
 }
 
-function buildFieldGeometry() {
+function buildFieldGeometry(count: number) {
   const rng = mulberry32(20260813)
-  const positions = new Float32Array(FIELD_COUNT * 3)
-  const colors = new Float32Array(FIELD_COUNT * 3)
-  const sizes = new Float32Array(FIELD_COUNT)
-  const twinkles = new Float32Array(FIELD_COUNT)
-  const phases = new Float32Array(FIELD_COUNT)
+  const positions = new Float32Array(count * 3)
+  const colors = new Float32Array(count * 3)
+  const sizes = new Float32Array(count)
+  const twinkles = new Float32Array(count)
+  const phases = new Float32Array(count)
 
-  for (let i = 0; i < FIELD_COUNT; i++) {
+  for (let i = 0; i < count; i++) {
     const theta = rng() * Math.PI * 2
     const r = FIELD_RADIUS * Math.sqrt(rng())
     positions[i * 3] = r * Math.cos(theta)
@@ -60,15 +62,15 @@ function buildFieldGeometry() {
   return geo
 }
 
-function buildShellGeometry() {
+function buildShellGeometry(count: number) {
   const rng = mulberry32(20260814)
-  const positions = new Float32Array(FAR_COUNT * 3)
-  const colors = new Float32Array(FAR_COUNT * 3)
-  const sizes = new Float32Array(FAR_COUNT)
-  const twinkles = new Float32Array(FAR_COUNT)
-  const phases = new Float32Array(FAR_COUNT)
+  const positions = new Float32Array(count * 3)
+  const colors = new Float32Array(count * 3)
+  const sizes = new Float32Array(count)
+  const twinkles = new Float32Array(count)
+  const phases = new Float32Array(count)
 
-  for (let i = 0; i < FAR_COUNT; i++) {
+  for (let i = 0; i < count; i++) {
     const theta = rng() * Math.PI * 2
     const z = rng() * 2 - 1
     const r = FAR_MIN + rng() * (FAR_MAX - FAR_MIN)
@@ -92,12 +94,24 @@ function buildShellGeometry() {
 }
 
 export function Starfield() {
-  const field = useMemo(buildFieldGeometry, [])
-  const shell = useMemo(buildShellGeometry, [])
+  const quality = useApp((s) => s.quality)
+  const reducedMotion = useApp((s) => s.reducedMotion)
+  const frac = QUALITY[quality].starFraction
+  const field = useMemo(() => buildFieldGeometry(Math.floor(FIELD_COUNT * frac)), [frac])
+  const shell = useMemo(() => buildShellGeometry(Math.floor(FAR_COUNT * frac)), [frac])
   const material = useMemo(createStarfieldMaterial, [])
+
+  useEffect(
+    () => () => {
+      field.dispose()
+      shell.dispose()
+    },
+    [field, shell],
+  )
 
   useFrame(({ clock }) => {
     material.uniforms.uTime.value = clock.elapsedTime
+    material.uniforms.uTwinkle.value = reducedMotion ? 0 : 1
   })
 
   return (

@@ -39,6 +39,22 @@ export function Radar() {
 
       const scale = (Math.min(w, h) / 2) / RANGE
 
+      const sunX = -ship.x * scale
+      const sunY = -ship.z * scale
+      const sunD = Math.hypot(sunX, sunY)
+      const sunMax = Math.min(w, h) / 2 - 6
+      const sx = sunD > sunMax ? (sunX / sunD) * sunMax : sunX
+      const sy = sunD > sunMax ? (sunY / sunD) * sunMax : sunY
+      ctx.beginPath()
+      ctx.fillStyle = '#ffb84d'
+      ctx.globalAlpha = 0.95
+      ctx.arc(sx, sy, 4.5, 0, Math.PI * 2)
+      ctx.fill()
+      ctx.beginPath()
+      ctx.globalAlpha = 0.3
+      ctx.arc(sx, sy, 7.5, 0, Math.PI * 2)
+      ctx.fill()
+
       for (const p of PLANETS) {
         const entry = planetRegistry.get(p.id)
         if (!entry) continue
@@ -78,6 +94,8 @@ export function Radar() {
         ref={canvasRef}
         width={SIZE}
         height={SIZE}
+        role="img"
+        aria-label="Radar: planets shown as colored dots relative to the ship"
         className="rounded-full border border-sky-300/20 bg-black/40"
       />
       <div className="mono mt-1 text-center text-[9px] uppercase tracking-[0.3em] text-sky-300/40">

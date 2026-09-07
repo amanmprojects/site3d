@@ -1,11 +1,13 @@
 'use client'
 
-import { useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { mulberry32 } from '@/lib/noise'
 import { starColor } from './Starfield'
 import { motion } from '@/lib/motion'
+import { useApp } from '@/lib/store'
+import { QUALITY } from '@/lib/quality'
 
 const DUST_COUNT = 2400
 const DUST_RADIUS = 1200
@@ -87,6 +89,11 @@ export function SpaceDust() {
     return geo
   }, [])
   const material = useMemo(createDustMaterial, [])
+  const quality = useApp((s) => s.quality)
+
+  useEffect(() => {
+    geometry.setDrawRange(0, QUALITY[quality].dustCount)
+  }, [quality, geometry])
 
   useFrame(() => {
     const speed = motion.speed

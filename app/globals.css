@@ -10,6 +10,29 @@
   box-sizing: border-box;
 }
 
+:focus-visible {
+  outline: 2px solid rgba(255, 184, 77, 0.9);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .crosshair-dot,
+  .orbit-dot,
+  .loading-pulse,
+  .fade-in,
+  .planet-label {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+html.reduced-motion .crosshair-dot,
+html.reduced-motion .orbit-dot,
+html.reduced-motion .loading-pulse,
+html.reduced-motion .fade-in {
+  animation: none !important;
+}
+
 html,
 body {
   margin: 0;

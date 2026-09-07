@@ -4,6 +4,28 @@ All notable changes to this project are documented in this file.
 
 ## [Unreleased]
 
+- In-flight system map: the roadmap's "system-map overlay" finally ships. Press M during flight to release the pointer (the session stays alive, the ship coasts) and open a full-screen grid of all 12 planets — one tap/click autopilot-warps there and relocks the cursor; M, Esc or "back to flight" closes it. Arrow keys navigate the grid, and the gfx/motion/sound toggles live here too. Previously desktop players had no way to warp mid-flight: planet labels need a visible cursor, which pointer lock hides. (`components/HUD.tsx`, `lib/store.ts`, `components/Ship.tsx`)
+
+- WebGL-unavailable fallback: if `getContext('webgl2'/'webgl')` fails on mount, the scene is replaced by a styled fallback page ("WebGL is unavailable") listing all 12 projects as links, and the ~27MB of GLB preloads are skipped. Previously a blocked GPU meant an eternal black loading screen. (R3F's `<Canvas fallback>` prop was evaluated and rejected — it renders its content as children of the `<canvas>` element, which browsers never paint.) (`components/Experience.tsx`)
+
+- Live GitHub content (Pillar 3b): `scripts/fetch-github.mjs` fetches stars/forks/language/last-push/archived for every linked repo from the GitHub REST API into a committed `lib/repoData.json` snapshot (runs at the start of `npm run build`; never fails the build; `GITHUB_TOKEN` raises the rate limit). `lib/planets.ts` enriches each project with a `repo` field; the info popup shows a "live" stats line (language · ★ stars · forks · pushed x ago · archived) and the intro planet grid shows each project's primary language.
+
+- Quality presets (Pillar 4): low/medium/high toggle in the HUD (top-right during flight, bottom of the intro) switching starfield density fraction, dust count, bloom multisampling, dpr range and the skybox HDRI resolution (new downscaled `NightSkyHDRI008_2K/4K.jpg` variants alongside the 8K). Auto-detected on first load from pointer type + CPU cores, persisted to localStorage (`lib/quality.ts`, wired through `Experience`/`Effects`/`Starfield`/`SpaceDust`/`NightSky`).
+
+- Reduced-motion mode (Pillar 4): a "motion on/off" HUD toggle (also honoring `prefers-reduced-motion` on first load) that kills the camera shake, planet emissive pulsing, starfield twinkle, film-grain Noise effect and warp-blur strength, and slows the skybox rotation to a crawl.
+
+- Planet LOD (Pillar 4): beyond `radius * 38` each detailed phoenix mesh swaps to a cheap tinted sphere (hysteresis band back in at `radius * 30`), so the 12 distant clones cost almost nothing; the full model returns on approach.
+
+- SEO/social: generated OG/Twitter preview image (`app/opengraph-image.tsx`, next/og), a screen-reader/crawler-readable sr-only project list in `app/page.tsx`, JSON-LD `ItemList` structured data for the 12 projects, and a `themeColor` viewport export.
+
+- Intro keyboard flow: the Launch button is autofocused when the intro appears, and the planet grid supports arrow-key navigation (←/→/↑/↓ move focus, Enter launches the warp) on top of plain Tab order.
+
+- Fixed a stale warp after Esc: pressing Esc mid-autopilot cancelled pointer lock but left `warpTo` set, so the next launch auto-warped back to the old target. Esc now also cancels the warp (`components/Ship.tsx`).
+
+- Sun collision: the sun is registered in `planetRegistry` (id `sun`, radius = model bounding sphere × 1.35) so the ship bounces off it like planets instead of flying straight through the star (`components/Star.tsx`); the radar also shows the sun as its own amber blip, clamped to the rim like planets, and the radar canvas gained an `aria-label`.
+
+- The info popup's project link is now a real clickable "open project ↗" anchor (`pointer-events-auto`), so touch users (and desktop users who Esc mid-scan) can open it without the Enter key.
+
 - Fixed the Launch button not working on touch devices (iOS Safari): `requestPointerLock()` is unsupported on iOS, so the call was silently caught and `locked` never became `true` — the Intro screen stayed forever. `setLockImpl` in `components/Ship.tsx` now calls `setLocked(true)` directly on touch devices instead of attempting pointer lock. Also added a visible "exit" button in the top-right HUD for touch (no Esc key on phones), which cancels any warp and returns to the Intro screen. (`components/Ship.tsx`, `components/HUD.tsx`)
 
 - Audio: a thin Web Audio layer (synthesized, no asset files). An engine hum whose gain + pitch track the ship's speed via `motion.speed`, a filtered-noise boost roar that ramps in above cruise, a sine + LFO warp drone while autopilot-warping, and a low ambient pad. A two-note scan chime fires when a planet's info panel opens (`setInfo`), and a noise-sweep whoosh fires on warp start. `muted` state in the Zustand store + a top-right "sound on/off" toggle in the HUD (`pointer-events-auto`). Audio is lazily created and resumed on the first user gesture (the Launch button / Space) to satisfy autoplay policy. (`lib/audio.ts`, `lib/store.ts`, `components/HUD.tsx`)
@@ -11,6 +33,12 @@ All notable changes to this project are documented in this file.
 - Touch controls: on touch devices, a left-side virtual stick steers (pitch/yaw) and right-side thrust/brake/boost buttons feed the existing flight model, so the portfolio is flyable on phones. Pointer lock is skipped on touch — the ship flies whenever the store is `locked` (the Launch button still starts a session). Desktop mouse/keyboard is untouched; the touch layer only mounts on coarse-pointer devices. (`components/TouchControls.tsx`, `lib/touchInput.ts`, `components/Ship.tsx`, `components/HUD.tsx`)
 
 - Radar/minimap: a circular top-down radar in the top-right HUD shows every planet as a colored dot (in its `palette.atmosphere` color) relative to the ship, rotated to the camera heading, with far planets clamped to the rim. (`components/Radar.tsx`, `components/HUD.tsx`)
+
+- Planets are now visually distinct again. Each planet clones its materials (so the shared `planet_of_phoenix.glb` nodes are never mutated) and applies a per-project tint from `palette`: the body is hue-shifted toward `palette.mid` (lerped 40% toward white so the phoenix surface stays readable), `emissive` uses `palette.emissive`/`palette.atmosphere`, and roughness/metalness/`toneMapped` come from a per-`type` preset (rocky/gas/ice/lava/ocean/tech). Lava and tech planets pulse their emissive intensity, and their `toneMapped=false` lets Bloom pick up the glow. (`components/Planet.tsx`, `lib/planets.ts`)
+
+- Atmosphere glow is back: a back-side, additively-blended fresnel-rim shader (`createAtmosphereMaterial` in `lib/geometry.ts`, `uColor` from `palette.atmosphere`) on a sphere ~12% larger than the body, fading with camera distance (`smoothstep(radius*2, radius*10, dist)` — visible from afar, gone near the surface). Rocky planets get a dimmer halo.
+
+- Planet rings return as an opt-in (`rings?: boolean` on `PlanetDef`/`Theme`, set on purr, grok-token-tracker, chess and kairo). The ring is a `RingGeometry` with remapped UVs (so the square band texture maps radially) textured by `createRingTexture` (`lib/geometry.ts`) and tinted with `palette.high`. (`components/Planet.tsx`, `lib/planets.ts`)
 
 - Mouse look sensitivity halved: pitch/yaw turn rate is now `e.movementX/Y * 0.0011` (was `0.0022`) in `components/Ship.tsx`, so the ship responds to mouse movement at half the previous rate.
 

@@ -37,22 +37,26 @@ gated behind a touch check so desktop mouse/keyboard is untouched. A corner
 radar/minimap showing planets + ship heading, and a system-map overlay to
 jump/warp with one tap (helps because planets move and the system is large).
 
-### Pillar 3b — Live GitHub content  ·  **Planned**
+### Pillar 3b — Live GitHub content  ·  **SHIPPED**
 
 Enrich `THEMES` with live repo metadata (stars, primary language, last-updated)
 via the GitHub REST API at build time or a cached client fetch, so `planets.ts`
 stays in sync with the real repos. `my-info.md` stays the curated list of *which*
 repos to feature; the API fills in live data.
+Shipped as: `scripts/fetch-github.mjs` → committed `lib/repoData.json` snapshot
+(refreshed at build time, never fails the build), `repo` field on every planet,
+live stats line in the info popup, language badges in the intro grid.
 
-### Pillar 4 — Polish, performance, accessibility  ·  **Planned**
+### Pillar 4 — Polish, performance, accessibility  ·  **SHIPPED**
 
 Quality presets (Low/Med/High) toggling starfield/dust counts, bloom
 multisampling, HDRI resolution — adaptive on first load. LOD for planet meshes
-(12 clones). A retuned warp effect (a warp tunnel/star-streak that doesn't smear
-bloom) so speed feels like warp again. Reduced-motion mode (kills
-twinkle/shake/blur), keyboard-only nav for the intro map, focus styles on every
-`pointer-events-auto` control. Real OG image + crawler-readable project list so
-links preview correctly.
+(12 clones). Retuned warp blur (speed-scaled smoothstep, only smears at
+warp-class speeds). Reduced-motion mode (kills twinkle/shake/blur/pulse), full
+keyboard flow for the intro (autofocused Launch, arrow-key planet grid), focus
+styles on every `pointer-events-auto` control, radar `aria-label`, real OG image
++ sr-only project list + JSON-LD so links and crawlers preview correctly.
+Touch users can open project links from the info popup.
 
 ---
 
@@ -60,9 +64,9 @@ links preview correctly.
 
 1. **PR-1** — Pillar 1 (distinctive planets)  ·  shipped
 2. **PR-2** — Pillar 2 (audio)  ·  shipped
-3. **PR-3** — Pillar 3a (touch + nav aids)  ·  shipped  ·  shipped
-4. **PR-4** — Pillar 3b (live GitHub content)
-5. **PR-5** — Pillar 4 (polish/perf/a11y)
+3. **PR-3** — Pillar 3a (touch + nav aids)  ·  shipped
+4. **PR-4** — Pillar 3b (live GitHub content)  ·  shipped
+5. **PR-5** — Pillar 4 (polish/perf/a11y)  ·  shipped
 
 Every PR follows the repo conventions in `AGENTS.md`: client-only `'use client'`
 on new R3F components, `pointer-events-auto` on clickable HUD elements,

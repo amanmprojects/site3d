@@ -3,9 +3,11 @@
 import { useEffect, useMemo, useRef } from 'react'
 import { useAnimations, useGLTF } from '@react-three/drei'
 import * as THREE from 'three'
+import { planetRegistry } from '@/lib/planetRegistry'
 
 const MODEL_SCALE = 90 * 3.5
 const GLOW_SIZE = 800 * 3.5
+const SUN_CLEARANCE = 1.35
 
 function createGlowTexture() {
   const size = 256
@@ -28,6 +30,7 @@ function createGlowTexture() {
 }
 
 export function Star() {
+  const rootRef = useRef<THREE.Group>(null)
   const modelRef = useRef<THREE.Group>(null)
   const { scene, animations } = useGLTF('/sun/stroming_sun.glb')
   const { actions } = useAnimations(animations, modelRef)
@@ -55,8 +58,23 @@ export function Star() {
     if (action) action.reset().play()
   }, [animations, actions])
 
+  useEffect(() => {
+    const root = rootRef.current
+    if (!root) return
+    const box = new THREE.Box3().setFromObject(root)
+    const sphere = new THREE.Sphere()
+    box.getBoundingSphere(sphere)
+    planetRegistry.set('sun', {
+      object: root,
+      radius: sphere.radius * SUN_CLEARANCE,
+    })
+    return () => {
+      planetRegistry.delete('sun')
+    }
+  }, [])
+
   return (
-    <group>
+    <group ref={rootRef}>
       <group ref={modelRef} scale={MODEL_SCALE}>
         <primitive object={scene} />
       </group>

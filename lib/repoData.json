@@ -1,0 +1,125 @@
+{
+  "fetchedAt": "2026-09-07T09:55:13.097Z",
+  "repos": {
+    "amanmprojects/llm": {
+      "stars": 0,
+      "forks": 0,
+      "issues": 0,
+      "language": "Python",
+      "pushedAt": "2026-08-09T15:34:07Z",
+      "archived": false,
+      "homepage": null,
+      "description": "100M-param LLM trained from scratch on one laptop GPU — plus chessLLM, same arch on chess notation"
+    },
+    "amanmprojects/harness": {
+      "stars": 0,
+      "forks": 0,
+      "issues": 0,
+      "language": "MDX",
+      "pushedAt": "2026-08-02T21:17:25Z",
+      "archived": false,
+      "homepage": null,
+      "description": "Agentic coding harness: Pi coding agent in Electron with SuperGrok/xAI"
+    },
+    "amanmprojects/lunaeye": {
+      "stars": 0,
+      "forks": 0,
+      "issues": 1,
+      "language": "TypeScript",
+      "pushedAt": "2026-08-11T20:19:50Z",
+      "archived": false,
+      "homepage": null,
+      "description": "Give text-only models vision — Pi extension that has an eye model describe images back as text"
+    },
+    "amanmprojects/chess-bot": {
+      "stars": 0,
+      "forks": 0,
+      "issues": 0,
+      "language": "Python",
+      "pushedAt": "2026-08-11T11:49:04Z",
+      "archived": false,
+      "homepage": null,
+      "description": "PyTorch policy+value transformer that learns chess from Lichess games — plays vs Stockfish"
+    },
+    "amanmprojects/llm-endpoint-bench": {
+      "stars": 0,
+      "forks": 0,
+      "issues": 0,
+      "language": "TypeScript",
+      "pushedAt": "2026-08-08T20:42:07Z",
+      "archived": false,
+      "homepage": null,
+      "description": "Benchmark any LLM endpoint from your terminal — TTFT, tokens/sec, prompt caching, tool latency, cost"
+    },
+    "amanmprojects/purr": {
+      "stars": 0,
+      "forks": 0,
+      "issues": 0,
+      "language": "TypeScript",
+      "pushedAt": "2026-07-16T20:06:08Z",
+      "archived": false,
+      "homepage": null,
+      "description": "Dev machine in a browser tab — just-bash, bun.wasm TypeScript, virtual git, coding agent"
+    },
+    "amanmprojects/grok-token-tracker": {
+      "stars": 0,
+      "forks": 0,
+      "issues": 0,
+      "language": "MDX",
+      "pushedAt": "2026-07-14T18:37:46Z",
+      "archived": false,
+      "homepage": null,
+      "description": "Track Grok/Composer token usage from local session logs — OpenTUI dashboard or JSON"
+    },
+    "amanmprojects/chess": {
+      "stars": 0,
+      "forks": 0,
+      "issues": 0,
+      "language": "JavaScript",
+      "pushedAt": "2026-08-11T11:48:33Z",
+      "archived": false,
+      "homepage": null,
+      "description": "Browser chess in vanilla JS — 0x88 engine, perft-verified rules, negamax AI in a web worker"
+    },
+    "amanmprojects/agent": {
+      "stars": 0,
+      "forks": 0,
+      "issues": 0,
+      "language": "TypeScript",
+      "pushedAt": "2026-07-21T17:50:19Z",
+      "archived": false,
+      "homepage": null,
+      "description": "Desktop coding agent on Pi — sessions, browser, terminal, Monaco, git"
+    },
+    "amanmprojects/disk-agent": {
+      "stars": 0,
+      "forks": 0,
+      "issues": 2,
+      "language": "MDX",
+      "pushedAt": "2026-08-15T16:05:54Z",
+      "archived": false,
+      "homepage": null,
+      "description": "Personal AI agent on the Pi SDK — chat from Telegram or CLI with memory, cron, and browser tools"
+    },
+    "amanmprojects/neo-aman-code": {
+      "stars": 0,
+      "forks": 0,
+      "issues": 5,
+      "language": "TypeScript",
+      "pushedAt": "2026-08-19T16:21:08Z",
+      "archived": false,
+      "homepage": null,
+      "description": "Terminal AI coding agent — OpenTUI + React TUI with an AI SDK tool loop for files, shell, and search"
+    },
+    "amanmprojects/kairo": {
+      "stars": 0,
+      "forks": 0,
+      "issues": 0,
+      "language": "Python",
+      "pushedAt": "2026-08-23T06:01:39Z",
+      "archived": false,
+      "homepage": null,
+      "description": "KAIRO proposal — temporal knowledge graph turning commits, PRs and Slack into engineering memory"
+    }
+  }
+}
