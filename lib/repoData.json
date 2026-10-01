@@ -1,5 +1,5 @@
 {
-  "fetchedAt": "2026-09-07T09:55:13.097Z",
+  "fetchedAt": "2026-10-01T08:58:30.759Z",
   "repos": {
     "amanmprojects/llm": {
       "stars": 0,
@@ -116,7 +116,7 @@
       "forks": 0,
       "issues": 0,
       "language": "Python",
-      "pushedAt": "2026-08-23T06:01:39Z",
+      "pushedAt": "2026-09-26T01:57:28Z",
       "archived": false,
       "homepage": null,
       "description": "KAIRO proposal — temporal knowledge graph turning commits, PRs and Slack into engineering memory"

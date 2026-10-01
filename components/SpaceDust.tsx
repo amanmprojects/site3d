@@ -7,9 +7,9 @@ import { mulberry32 } from '@/lib/noise'
 import { starColor } from './Starfield'
 import { motion } from '@/lib/motion'
 import { useApp } from '@/lib/store'
-import { QUALITY } from '@/lib/quality'
+import { QUALITY, DUST_MAX } from '@/lib/quality'
 
-const DUST_COUNT = 2400
+const DUST_COUNT = DUST_MAX
 const DUST_RADIUS = 1200
 const DUST_INNER = 150
 const DUST_HALF = 6000
@@ -90,10 +90,12 @@ export function SpaceDust() {
   }, [])
   const material = useMemo(createDustMaterial, [])
   const quality = useApp((s) => s.quality)
+  const dustCount = useApp((s) => s.dustCount)
+  const active = Math.max(0, Math.min(QUALITY[quality].dustCount, dustCount))
 
   useEffect(() => {
-    geometry.setDrawRange(0, QUALITY[quality].dustCount)
-  }, [quality, geometry])
+    geometry.setDrawRange(0, active)
+  }, [active, geometry])
 
   useFrame(() => {
     const speed = motion.speed
@@ -110,7 +112,7 @@ export function SpaceDust() {
     const arr = pos.array as Float32Array
     const ship = motion.position
     let dirty = false
-    for (let i = 0; i < DUST_COUNT; i++) {
+    for (let i = 0; i < active; i++) {
       const dx = arr[i * 3] - ship.x
       const dy = arr[i * 3 + 1] - ship.y
       const dz = arr[i * 3 + 2] - ship.z

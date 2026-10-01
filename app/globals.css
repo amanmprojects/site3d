@@ -54,6 +54,40 @@ body {
   text-shadow: 0 0 8px rgba(120, 200, 255, 0.6);
 }
 
+.hud-range {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 2px;
+  background: rgba(159, 216, 255, 0.25);
+  cursor: pointer;
+}
+
+.hud-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 9999px;
+  background: var(--accent);
+  box-shadow: 0 0 8px rgba(255, 184, 77, 0.7);
+  cursor: pointer;
+}
+
+.hud-range::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border: none;
+  border-radius: 9999px;
+  background: var(--accent);
+  box-shadow: 0 0 8px rgba(255, 184, 77, 0.7);
+  cursor: pointer;
+}
+
+.hud-range::-moz-range-track {
+  height: 2px;
+  background: rgba(159, 216, 255, 0.25);
+}
+
 .panel {
   background: rgba(6, 14, 26, 0.72);
   border: 1px solid rgba(120, 180, 255, 0.22);

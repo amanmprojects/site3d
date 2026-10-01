@@ -4,7 +4,11 @@ export const SETTINGS_KEYS = {
   quality: 'op:quality',
   muted: 'op:muted',
   motion: 'op:motion',
+  dust: 'op:dust',
 } as const
+
+/** Ceiling for the space-dust slider, across every quality level. */
+export const DUST_MAX = 2400
 
 export interface QualitySettings {
   starFraction: number

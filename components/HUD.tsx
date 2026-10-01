@@ -11,7 +11,7 @@ import { startAudio, setAudioMuted, audioScanChime, audioWarpWhoosh } from '@/li
 import { TouchControls } from '@/components/TouchControls'
 import { Radar } from '@/components/Radar'
 import { isTouchDevice } from '@/lib/touchInput'
-import { QUALITY_ORDER, SETTINGS_KEYS } from '@/lib/quality'
+import { QUALITY, QUALITY_ORDER, SETTINGS_KEYS } from '@/lib/quality'
 
 function timeAgo(iso: string | null) {
   if (!iso) return null
@@ -34,6 +34,77 @@ function repoStats(repo: NonNullable<ReturnType<typeof projectById>>['repo']) {
     repo.archived ? 'archived' : null,
   ].filter(Boolean)
   return parts.length ? parts.join(' · ') : null
+}
+
+function SettingsRow() {
+  const muted = useApp((s) => s.muted)
+  const quality = useApp((s) => s.quality)
+  const reducedMotion = useApp((s) => s.reducedMotion)
+
+  return (
+    <div className="mono flex flex-wrap items-center justify-center gap-5 text-xs uppercase tracking-[0.3em]">
+      <button
+        type="button"
+        onClick={() => useApp.getState().toggleMuted()}
+        className="text-sky-300/50 transition hover:text-amber-200/90"
+        aria-label={muted ? 'Unmute audio' : 'Mute audio'}
+        aria-pressed={muted}
+      >
+        {muted ? 'sound off' : 'sound on'}
+      </button>
+      <button
+        type="button"
+        onClick={() => {
+          const order = QUALITY_ORDER
+          useApp
+            .getState()
+            .setQuality(order[(order.indexOf(useApp.getState().quality) + 1) % order.length])
+        }}
+        className="text-sky-300/50 transition hover:text-amber-200/90"
+        aria-label={`Graphics quality: ${quality}. Click to change`}
+      >
+        gfx {quality}
+      </button>
+      <button
+        type="button"
+        onClick={() =>
+          useApp.getState().setReducedMotion(!useApp.getState().reducedMotion)
+        }
+        className="text-sky-300/50 transition hover:text-amber-200/90"
+        aria-label={reducedMotion ? 'Enable motion effects' : 'Reduce motion effects'}
+        aria-pressed={reducedMotion}
+      >
+        {reducedMotion ? 'motion off' : 'motion on'}
+      </button>
+    </div>
+  )
+}
+
+function DustSlider({ className = '' }: { className?: string }) {
+  const quality = useApp((s) => s.quality)
+  const dustCount = useApp((s) => s.dustCount)
+  const max = QUALITY[quality].dustCount
+  const value = Math.max(0, Math.min(max, dustCount))
+
+  return (
+    <label
+      className={`mono flex items-center gap-3 text-xs uppercase tracking-[0.3em] ${className}`}
+    >
+      <span className="text-sky-300/50">dust</span>
+      <input
+        type="range"
+        className="hud-range w-32"
+        min={0}
+        max={max}
+        step={25}
+        value={value}
+        onChange={(e) => useApp.getState().setDustCount(Number(e.target.value))}
+        aria-label="Space dust particle count"
+        aria-valuetext={`${value} of ${max}`}
+      />
+      <span className="w-14 text-right tabular-nums text-amber-200/90">{value}</span>
+    </label>
+  )
 }
 
 function TargetIndicator() {
@@ -96,9 +167,6 @@ function TargetIndicator() {
 }
 
 function Intro({ onWarp }: { onWarp: (id: string) => void }) {
-  const muted = useApp((s) => s.muted)
-  const quality = useApp((s) => s.quality)
-  const reducedMotion = useApp((s) => s.reducedMotion)
   const gridRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -172,41 +240,8 @@ function Intro({ onWarp }: { onWarp: (id: string) => void }) {
           or press space
         </div>
 
-        <div className="mono mt-5 flex items-center justify-center gap-5 text-xs uppercase tracking-[0.3em]">
-          <button
-            type="button"
-            onClick={() => useApp.getState().toggleMuted()}
-            className="text-sky-300/50 transition hover:text-amber-200/90"
-            aria-label={muted ? 'Unmute audio' : 'Mute audio'}
-            aria-pressed={muted}
-          >
-            {muted ? 'sound off' : 'sound on'}
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              const order = QUALITY_ORDER
-              useApp
-                .getState()
-                .setQuality(order[(order.indexOf(useApp.getState().quality) + 1) % order.length])
-            }}
-            className="text-sky-300/50 transition hover:text-amber-200/90"
-            aria-label={`Graphics quality: ${quality}. Click to change`}
-          >
-            gfx {quality}
-          </button>
-          <button
-            type="button"
-            onClick={() =>
-              useApp.getState().setReducedMotion(!useApp.getState().reducedMotion)
-            }
-            className="text-sky-300/50 transition hover:text-amber-200/90"
-            aria-label={reducedMotion ? 'Enable motion effects' : 'Reduce motion effects'}
-            aria-pressed={reducedMotion}
-          >
-            {reducedMotion ? 'motion off' : 'motion on'}
-          </button>
-        </div>
+        <SettingsRow />
+        <DustSlider className="mt-4" />
       </div>
 
       <div className="w-full max-w-5xl px-6 pb-8">
@@ -243,9 +278,6 @@ function Intro({ onWarp }: { onWarp: (id: string) => void }) {
 }
 
 function SystemMap({ onWarp }: { onWarp: (id: string) => void }) {
-  const muted = useApp((s) => s.muted)
-  const quality = useApp((s) => s.quality)
-  const reducedMotion = useApp((s) => s.reducedMotion)
   const gridRef = useRef<HTMLDivElement>(null)
 
   const close = () => {
@@ -327,40 +359,9 @@ function SystemMap({ onWarp }: { onWarp: (id: string) => void }) {
           </button>
         </div>
 
-        <div className="mono mt-6 flex items-center justify-center gap-5 text-xs uppercase tracking-[0.3em]">
-          <button
-            type="button"
-            onClick={() => useApp.getState().toggleMuted()}
-            className="text-sky-300/50 transition hover:text-amber-200/90"
-            aria-label={muted ? 'Unmute audio' : 'Mute audio'}
-            aria-pressed={muted}
-          >
-            {muted ? 'sound off' : 'sound on'}
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              const order = QUALITY_ORDER
-              useApp
-                .getState()
-                .setQuality(order[(order.indexOf(useApp.getState().quality) + 1) % order.length])
-            }}
-            className="text-sky-300/50 transition hover:text-amber-200/90"
-            aria-label={`Graphics quality: ${quality}. Click to change`}
-          >
-            gfx {quality}
-          </button>
-          <button
-            type="button"
-            onClick={() =>
-              useApp.getState().setReducedMotion(!useApp.getState().reducedMotion)
-            }
-            className="text-sky-300/50 transition hover:text-amber-200/90"
-            aria-label={reducedMotion ? 'Enable motion effects' : 'Reduce motion effects'}
-            aria-pressed={reducedMotion}
-          >
-            {reducedMotion ? 'motion off' : 'motion on'}
-          </button>
+        <div className="mt-6 flex flex-col items-center gap-4">
+          <SettingsRow />
+          <DustSlider />
         </div>
       </div>
     </div>
@@ -395,13 +396,15 @@ export function HUD() {
       if (
         s.quality === prev.quality &&
         s.muted === prev.muted &&
-        s.reducedMotion === prev.reducedMotion
+        s.reducedMotion === prev.reducedMotion &&
+        s.dustCount === prev.dustCount
       )
         return
       try {
         localStorage.setItem(SETTINGS_KEYS.quality, s.quality)
         localStorage.setItem(SETTINGS_KEYS.muted, s.muted ? '1' : '0')
         localStorage.setItem(SETTINGS_KEYS.motion, s.reducedMotion ? '0' : '1')
+        localStorage.setItem(SETTINGS_KEYS.dust, String(s.dustCount))
       } catch {
         /* private mode */
       }
@@ -480,45 +483,48 @@ export function HUD() {
           </div>
 
           {/* top-right controls */}
-          <div className="pointer-events-auto absolute right-5 top-5 flex items-center gap-4">
-            {isTouchDevice() && (
+          <div className="pointer-events-auto absolute right-5 top-5 flex flex-col items-end gap-3">
+            <div className="flex items-center gap-4">
+              {isTouchDevice() && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    cancelWarp()
+                    setLocked(false)
+                  }}
+                  className="mono text-xs uppercase tracking-[0.3em] text-sky-300/50 transition hover:text-amber-200/90"
+                >
+                  exit
+                </button>
+              )}
               <button
                 type="button"
-                onClick={() => {
-                  cancelWarp()
-                  setLocked(false)
-                }}
+                onClick={toggleReducedMotion}
                 className="mono text-xs uppercase tracking-[0.3em] text-sky-300/50 transition hover:text-amber-200/90"
+                aria-label={reducedMotion ? 'Enable motion effects' : 'Reduce motion effects'}
+                aria-pressed={reducedMotion}
               >
-                exit
+                {reducedMotion ? 'motion off' : 'motion on'}
               </button>
-            )}
-            <button
-              type="button"
-              onClick={toggleReducedMotion}
-              className="mono text-xs uppercase tracking-[0.3em] text-sky-300/50 transition hover:text-amber-200/90"
-              aria-label={reducedMotion ? 'Enable motion effects' : 'Reduce motion effects'}
-              aria-pressed={reducedMotion}
-            >
-              {reducedMotion ? 'motion off' : 'motion on'}
-            </button>
-            <button
-              type="button"
-              onClick={cycleQuality}
-              className="mono text-xs uppercase tracking-[0.3em] text-sky-300/50 transition hover:text-amber-200/90"
-              aria-label={`Graphics quality: ${quality}. Click to change`}
-            >
-              gfx {quality}
-            </button>
-            <button
-              type="button"
-              onClick={toggleMuted}
-              className="mono text-xs uppercase tracking-[0.3em] text-sky-300/50 transition hover:text-amber-200/90"
-              aria-label={muted ? 'Unmute audio' : 'Mute audio'}
-              aria-pressed={muted}
-            >
-              {muted ? 'sound off' : 'sound on'}
-            </button>
+              <button
+                type="button"
+                onClick={cycleQuality}
+                className="mono text-xs uppercase tracking-[0.3em] text-sky-300/50 transition hover:text-amber-200/90"
+                aria-label={`Graphics quality: ${quality}. Click to change`}
+              >
+                gfx {quality}
+              </button>
+              <button
+                type="button"
+                onClick={toggleMuted}
+                className="mono text-xs uppercase tracking-[0.3em] text-sky-300/50 transition hover:text-amber-200/90"
+                aria-label={muted ? 'Unmute audio' : 'Mute audio'}
+                aria-pressed={muted}
+              >
+                {muted ? 'sound off' : 'sound on'}
+              </button>
+            </div>
+            <DustSlider />
           </div>
 
           {/* bottom-left hints */}
