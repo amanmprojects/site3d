@@ -29,14 +29,14 @@ export const QUALITY: Record<QualityLevel, QualitySettings> = {
   medium: {
     starFraction: 0.5,
     dustCount: 1800,
-    multisampling: 2,
+    multisampling: 0,
     dpr: [1, 1.5],
     skyUrl: '/sky/NightSkyHDRI008_4K.jpg',
   },
   high: {
     starFraction: 1,
     dustCount: 2400,
-    multisampling: 4,
+    multisampling: 0,
     dpr: [1, 2],
     skyUrl: '/sky/NightSkyHDRI008_8K.jpg',
   },
