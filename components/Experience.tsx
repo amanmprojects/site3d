@@ -9,6 +9,7 @@ import { Starfield } from './Starfield'
 import { SpaceDust } from './SpaceDust'
 import { NightSky } from './NightSky'
 import { Effects } from './Effects'
+import { DebugOverlay } from './DebugOverlay'
 import { useApp } from '@/lib/store'
 import { PLANETS } from '@/lib/planets'
 import { QUALITY } from '@/lib/quality'
@@ -93,6 +94,8 @@ export function Experience() {
         <Ship />
         <Effects />
       </Suspense>
+      {/* outside Suspense: the readout must appear even while assets load */}
+      <DebugOverlay />
     </Canvas>
   )
 }
