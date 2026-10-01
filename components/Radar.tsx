@@ -77,10 +77,19 @@ export function Radar() {
       ctx.globalAlpha = 1
       ctx.restore()
 
+      // Ship marker: drawn unrotated so the arrow points along the current
+      // heading (the rotated context above handles everything else).
       ctx.beginPath()
-      ctx.arc(cx, cy, 3, 0, Math.PI * 2)
+      ctx.moveTo(0, -6.5)
+      ctx.lineTo(5, 5.5)
+      ctx.lineTo(0, 2.5)
+      ctx.lineTo(-5, 5.5)
+      ctx.closePath()
       ctx.fillStyle = '#ffd27a'
       ctx.fill()
+      ctx.lineWidth = 1
+      ctx.strokeStyle = 'rgba(10, 15, 25, 0.85)'
+      ctx.stroke()
     }
     raf = requestAnimationFrame(draw)
     return () => cancelAnimationFrame(raf)
@@ -89,14 +98,14 @@ export function Radar() {
   if (!locked) return null
 
   return (
-    <div className="pointer-events-none absolute right-5 top-5 z-20">
+    <div className="pointer-events-none z-20 shrink-0">
       <canvas
         ref={canvasRef}
         width={SIZE}
         height={SIZE}
         role="img"
-        aria-label="Radar: planets shown as colored dots relative to the ship"
-        className="rounded-full border border-sky-300/20 bg-black/40"
+        aria-label="Radar: an arrow shows the ship's heading; planets appear as colored dots relative to it"
+        className="h-24 w-24 rounded-full border border-sky-300/20 bg-black/40 sm:h-[130px] sm:w-[130px]"
       />
       <div className="mono mt-1 text-center text-[9px] uppercase tracking-[0.3em] text-sky-300/40">
         radar

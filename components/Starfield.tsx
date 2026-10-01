@@ -6,12 +6,10 @@ import * as THREE from 'three'
 import { mulberry32 } from '@/lib/noise'
 import { createStarfieldMaterial } from '@/lib/geometry'
 import { useApp } from '@/lib/store'
-import { QUALITY } from '@/lib/quality'
+import { QUALITY, STAR_FIELD_MAX as FIELD_COUNT, STAR_SHELL_MAX as FAR_COUNT, starCeiling } from '@/lib/quality'
 
-const FIELD_COUNT = 2400000
 const FIELD_RADIUS = 48000
 const FIELD_HALF_H = 10000
-const FAR_COUNT = 60000
 const FAR_MIN = 60000
 const FAR_MAX = 128000
 
@@ -96,10 +94,22 @@ function buildShellGeometry(count: number) {
 export function Starfield() {
   const quality = useApp((s) => s.quality)
   const reducedMotion = useApp((s) => s.reducedMotion)
+  const starCount = useApp((s) => s.starCount)
   const frac = QUALITY[quality].starFraction
   const field = useMemo(() => buildFieldGeometry(Math.floor(FIELD_COUNT * frac)), [frac])
   const shell = useMemo(() => buildShellGeometry(Math.floor(FAR_COUNT * frac)), [frac])
   const material = useMemo(createStarfieldMaterial, [])
+
+  // The slider scales the draw range rather than rebuilding the buffers, so
+  // dragging it never reallocates the 2.4M-point field.
+  useEffect(() => {
+    const ceiling = starCeiling(quality)
+    const frac = ceiling > 0 ? Math.min(1, Math.max(0, starCount) / ceiling) : 0
+    const fieldTotal = (field.getAttribute('position') as THREE.BufferAttribute).count
+    const shellTotal = (shell.getAttribute('position') as THREE.BufferAttribute).count
+    field.setDrawRange(0, Math.floor(fieldTotal * frac))
+    shell.setDrawRange(0, Math.floor(shellTotal * frac))
+  }, [starCount, quality, field, shell])
 
   useEffect(
     () => () => {

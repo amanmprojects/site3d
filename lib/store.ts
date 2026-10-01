@@ -1,11 +1,11 @@
 import { create } from 'zustand'
 import {
-  DUST_MAX,
   detectQuality,
   detectReducedMotion,
-  QUALITY,
   QUALITY_ORDER,
   SETTINGS_KEYS,
+  STAR_MAX,
+  starCeiling,
   type QualityLevel,
 } from './quality'
 
@@ -38,8 +38,8 @@ interface AppState {
   qualityReady: boolean
   initSettings: () => void
 
-  dustCount: number
-  setDustCount: (n: number) => void
+  starCount: number
+  setStarCount: (n: number) => void
 
   reducedMotion: boolean
   setReducedMotion: (v: boolean) => void
@@ -77,9 +77,9 @@ export const useApp = create<AppState>((set, get) => ({
   quality: 'high',
   setQuality: (q) => set({ quality: q }),
 
-  dustCount: DUST_MAX,
-  setDustCount: (n) =>
-    set(() => ({ dustCount: Math.max(0, Math.min(DUST_MAX, Math.round(n))) })),
+  starCount: STAR_MAX,
+  setStarCount: (n) =>
+    set(() => ({ starCount: Math.max(0, Math.min(STAR_MAX, Math.round(n))) })),
 
   qualityReady: false,
   initSettings: () => {
@@ -105,18 +105,18 @@ export const useApp = create<AppState>((set, get) => ({
     } catch {
       /* private mode */
     }
-    let dustCount = QUALITY[quality].dustCount
+    let starCount = starCeiling(quality)
     try {
-      const storedDust = localStorage.getItem(SETTINGS_KEYS.dust)
-      if (storedDust !== null) {
-        const parsed = Number.parseInt(storedDust, 10)
-        if (Number.isFinite(parsed)) dustCount = parsed
+      const storedStars = localStorage.getItem(SETTINGS_KEYS.stars)
+      if (storedStars !== null) {
+        const parsed = Number.parseInt(storedStars, 10)
+        if (Number.isFinite(parsed)) starCount = parsed
       }
     } catch {
       /* private mode */
     }
-    dustCount = Math.max(0, Math.min(QUALITY[quality].dustCount, dustCount))
-    set({ quality, muted, reducedMotion, dustCount, qualityReady: true })
+    starCount = Math.max(0, Math.min(starCeiling(quality), starCount))
+    set({ quality, muted, reducedMotion, starCount, qualityReady: true })
   },
 
   reducedMotion: false,

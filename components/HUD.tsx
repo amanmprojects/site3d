@@ -11,7 +11,7 @@ import { startAudio, setAudioMuted, audioScanChime, audioWarpWhoosh } from '@/li
 import { TouchControls } from '@/components/TouchControls'
 import { Radar } from '@/components/Radar'
 import { isTouchDevice } from '@/lib/touchInput'
-import { QUALITY, QUALITY_ORDER, SETTINGS_KEYS } from '@/lib/quality'
+import { QUALITY_ORDER, SETTINGS_KEYS, formatStars, starCeiling } from '@/lib/quality'
 
 function timeAgo(iso: string | null) {
   if (!iso) return null
@@ -80,29 +80,36 @@ function SettingsRow() {
   )
 }
 
-function DustSlider({ className = '' }: { className?: string }) {
+function StarSlider({ className = '' }: { className?: string }) {
   const quality = useApp((s) => s.quality)
-  const dustCount = useApp((s) => s.dustCount)
-  const max = QUALITY[quality].dustCount
-  const value = Math.max(0, Math.min(max, dustCount))
+  const starCount = useApp((s) => s.starCount)
+  const max = starCeiling(quality)
+  const value = Math.max(0, Math.min(max, starCount))
+  // The input is a 0-100 percentage; the store keeps an absolute count so the
+  // value survives a quality change.
+  const pct = max > 0 ? Math.round((value / max) * 100) : 0
 
   return (
     <label
       className={`mono flex items-center gap-3 text-xs uppercase tracking-[0.3em] ${className}`}
     >
-      <span className="text-sky-300/50">dust</span>
+      <span className="text-sky-300/50">stars</span>
       <input
         type="range"
-        className="hud-range w-32"
+        className="hud-range w-24 sm:w-32"
         min={0}
-        max={max}
-        step={25}
-        value={value}
-        onChange={(e) => useApp.getState().setDustCount(Number(e.target.value))}
-        aria-label="Space dust particle count"
-        aria-valuetext={`${value} of ${max}`}
+        max={100}
+        step={1}
+        value={pct}
+        onChange={(e) =>
+          useApp.getState().setStarCount((Number(e.target.value) / 100) * max)
+        }
+        aria-label="Starfield star count"
+        aria-valuetext={`${value.toLocaleString()} of ${max.toLocaleString()} stars`}
       />
-      <span className="w-14 text-right tabular-nums text-amber-200/90">{value}</span>
+      <span className="w-12 text-right tabular-nums text-amber-200/90 sm:w-14">
+        {formatStars(value)}
+      </span>
     </label>
   )
 }
@@ -241,7 +248,7 @@ function Intro({ onWarp }: { onWarp: (id: string) => void }) {
         </div>
 
         <SettingsRow />
-        <DustSlider className="mt-4" />
+        <StarSlider className="mt-4" />
       </div>
 
       <div className="w-full max-w-5xl px-6 pb-8">
@@ -361,7 +368,7 @@ function SystemMap({ onWarp }: { onWarp: (id: string) => void }) {
 
         <div className="mt-6 flex flex-col items-center gap-4">
           <SettingsRow />
-          <DustSlider />
+          <StarSlider />
         </div>
       </div>
     </div>
@@ -397,14 +404,14 @@ export function HUD() {
         s.quality === prev.quality &&
         s.muted === prev.muted &&
         s.reducedMotion === prev.reducedMotion &&
-        s.dustCount === prev.dustCount
+        s.starCount === prev.starCount
       )
         return
       try {
         localStorage.setItem(SETTINGS_KEYS.quality, s.quality)
         localStorage.setItem(SETTINGS_KEYS.muted, s.muted ? '1' : '0')
         localStorage.setItem(SETTINGS_KEYS.motion, s.reducedMotion ? '0' : '1')
-        localStorage.setItem(SETTINGS_KEYS.dust, String(s.dustCount))
+        localStorage.setItem(SETTINGS_KEYS.stars, String(s.starCount))
       } catch {
         /* private mode */
       }
@@ -471,84 +478,89 @@ export function HUD() {
             <div className="absolute left-1/2 top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border border-sky-300/30" />
           </div>
 
-          <Radar />
           {isTouchDevice() && <TouchControls />}
           {mapOpen && <SystemMap onWarp={handleWarp} />}
 
-          {/* top-left identity */}
-          <div className="absolute left-5 top-5">
-            <div className="mono text-sm uppercase tracking-[0.4em] text-sky-300/60 hud-glow">
-              Aman Mehtar
-            </div>
-          </div>
+          {/* Top bar. Identity, controls and the radar are laid out as one
+              wrapping flex row rather than independent absolute blocks, so on
+              a narrow portrait screen they reflow instead of overlapping. */}
+          <div className="absolute inset-x-5 top-5 flex flex-wrap items-start justify-between gap-3">
+            <div className="flex min-w-0 flex-1 flex-wrap items-start justify-between gap-3">
+              <div className="mono shrink-0 pt-1 text-xs uppercase tracking-[0.3em] text-sky-300/60 hud-glow sm:text-sm sm:tracking-[0.4em]">
+                Aman Mehtar
+              </div>
 
-          {/* top-right controls */}
-          <div className="pointer-events-auto absolute right-5 top-5 flex flex-col items-end gap-3">
-            <div className="flex items-center gap-4">
-              {isTouchDevice() && (
+              <div className="pointer-events-auto flex min-w-0 flex-col items-end gap-3">
+              <div className="flex flex-wrap items-center justify-end gap-x-4 gap-y-2">
+                {isTouchDevice() && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      cancelWarp()
+                      setLocked(false)
+                    }}
+                    className="mono text-xs uppercase tracking-[0.3em] text-sky-300/50 transition hover:text-amber-200/90"
+                  >
+                    exit
+                  </button>
+                )}
                 <button
                   type="button"
-                  onClick={() => {
-                    cancelWarp()
-                    setLocked(false)
-                  }}
+                  onClick={toggleReducedMotion}
                   className="mono text-xs uppercase tracking-[0.3em] text-sky-300/50 transition hover:text-amber-200/90"
+                  aria-label={reducedMotion ? 'Enable motion effects' : 'Reduce motion effects'}
+                  aria-pressed={reducedMotion}
                 >
-                  exit
+                  {reducedMotion ? 'motion off' : 'motion on'}
                 </button>
-              )}
-              <button
-                type="button"
-                onClick={toggleReducedMotion}
-                className="mono text-xs uppercase tracking-[0.3em] text-sky-300/50 transition hover:text-amber-200/90"
-                aria-label={reducedMotion ? 'Enable motion effects' : 'Reduce motion effects'}
-                aria-pressed={reducedMotion}
-              >
-                {reducedMotion ? 'motion off' : 'motion on'}
-              </button>
-              <button
-                type="button"
-                onClick={cycleQuality}
-                className="mono text-xs uppercase tracking-[0.3em] text-sky-300/50 transition hover:text-amber-200/90"
-                aria-label={`Graphics quality: ${quality}. Click to change`}
-              >
-                gfx {quality}
-              </button>
-              <button
-                type="button"
-                onClick={toggleMuted}
-                className="mono text-xs uppercase tracking-[0.3em] text-sky-300/50 transition hover:text-amber-200/90"
-                aria-label={muted ? 'Unmute audio' : 'Mute audio'}
-                aria-pressed={muted}
-              >
-                {muted ? 'sound off' : 'sound on'}
-              </button>
+                <button
+                  type="button"
+                  onClick={cycleQuality}
+                  className="mono text-xs uppercase tracking-[0.3em] text-sky-300/50 transition hover:text-amber-200/90"
+                  aria-label={`Graphics quality: ${quality}. Click to change`}
+                >
+                  gfx {quality}
+                </button>
+                <button
+                  type="button"
+                  onClick={toggleMuted}
+                  className="mono text-xs uppercase tracking-[0.3em] text-sky-300/50 transition hover:text-amber-200/90"
+                  aria-label={muted ? 'Unmute audio' : 'Mute audio'}
+                  aria-pressed={muted}
+                >
+                  {muted ? 'sound off' : 'sound on'}
+                </button>
+              </div>
+                <StarSlider />
+              </div>
             </div>
-            <DustSlider />
+
+            <Radar />
           </div>
 
-          {/* bottom-left hints */}
-          <div className="mono absolute bottom-5 left-5 text-xs uppercase leading-relaxed tracking-[0.3em] text-sky-300/40">
+          {/* bottom-left hints — hidden on narrow screens, where they would
+              otherwise run under the speed readout. */}
+          <div className="mono absolute bottom-5 left-5 hidden text-xs uppercase leading-relaxed tracking-[0.3em] text-sky-300/40 md:block">
             Mouse steer · W/S thrust/brake · A/D roll · Shift/Space boost · R reset
             <br />
             M system map · Esc release · Enter open project
           </div>
 
           {/* bottom-right speed */}
-          <div className="mono absolute bottom-5 right-5 text-right">
+          <div className="mono absolute bottom-5 right-5 w-44 text-right">
             <div className="flex items-baseline justify-end gap-2">
               <span className="tabular-nums text-3xl font-semibold leading-none text-sky-100/90 hud-glow">
                 {speed}
               </span>
               <span className="text-[10px] uppercase tracking-[0.3em] text-sky-300/50">u/s</span>
             </div>
-            <div className="mt-2 h-0.5 w-40 overflow-hidden bg-sky-300/10">
+            <div className="mt-2 h-0.5 w-full overflow-hidden bg-sky-300/10">
               <div
                 className="h-full bg-gradient-to-r from-sky-400/60 to-sky-200/90 transition-[width] duration-100"
                 style={{ width: `${Math.min(100, (speed / 1100) * 100)}%` }}
               />
             </div>
-            <div className="mt-1.5 flex justify-between text-[10px] uppercase tracking-[0.25em] text-sky-300/40">
+            <div className="mt-1.5 flex justify-between text-[10px] uppercase tracking-[0.15em] text-sky-300/40">
               <span>cruise 270</span>
               <span>boost 1100</span>
             </div>

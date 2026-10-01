@@ -90,8 +90,7 @@ export function SpaceDust() {
   }, [])
   const material = useMemo(createDustMaterial, [])
   const quality = useApp((s) => s.quality)
-  const dustCount = useApp((s) => s.dustCount)
-  const active = Math.max(0, Math.min(QUALITY[quality].dustCount, dustCount))
+  const active = QUALITY[quality].dustCount
 
   useEffect(() => {
     geometry.setDrawRange(0, active)
