@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useRef } from 'react'
+import { useFrame } from '@react-three/fiber'
 import { useAnimations, useGLTF } from '@react-three/drei'
 import * as THREE from 'three'
 import { planetRegistry } from '@/lib/planetRegistry'
@@ -8,6 +9,22 @@ import { planetRegistry } from '@/lib/planetRegistry'
 const MODEL_SCALE = 90 * 3.5
 const GLOW_SIZE = 800 * 3.5
 const SUN_CLEARANCE = 1.35
+const EXTENT_INTERVAL = 0.5
+
+const _sphere = new THREE.Sphere()
+const _origin = new THREE.Vector3()
+
+function meshExtent(model: THREE.Object3D, origin: THREE.Vector3) {
+  let r = 0
+  model.traverse((o) => {
+    const mesh = o as THREE.Mesh
+    if (!mesh.isMesh) return
+    if (!mesh.geometry.boundingSphere) mesh.geometry.computeBoundingSphere()
+    _sphere.copy(mesh.geometry.boundingSphere!).applyMatrix4(mesh.matrixWorld)
+    r = Math.max(r, _sphere.center.distanceTo(origin) + _sphere.radius)
+  })
+  return r
+}
 
 function createGlowTexture() {
   const size = 256
@@ -58,20 +75,31 @@ export function Star() {
     if (action) action.reset().play()
   }, [animations, actions])
 
+  const nextExtent = useRef(0)
+
   useEffect(() => {
     const root = rootRef.current
-    if (!root) return
-    const box = new THREE.Box3().setFromObject(root)
-    const sphere = new THREE.Sphere()
-    box.getBoundingSphere(sphere)
+    const model = modelRef.current
+    if (!root || !model) return
+    root.updateWorldMatrix(true, true)
     planetRegistry.set('sun', {
       object: root,
-      radius: sphere.radius * SUN_CLEARANCE,
+      radius: meshExtent(model, root.getWorldPosition(_origin)) * SUN_CLEARANCE,
     })
     return () => {
       planetRegistry.delete('sun')
     }
   }, [])
+
+  useFrame(({ clock }) => {
+    const entry = planetRegistry.get('sun')
+    const root = rootRef.current
+    const model = modelRef.current
+    if (!entry || !root || !model || clock.elapsedTime < nextExtent.current) return
+    nextExtent.current = clock.elapsedTime + EXTENT_INTERVAL
+    const r = meshExtent(model, root.getWorldPosition(_origin)) * SUN_CLEARANCE
+    if (r > entry.radius) entry.radius = r
+  })
 
   return (
     <group ref={rootRef}>

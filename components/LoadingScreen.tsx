@@ -42,11 +42,11 @@ export function LoadingScreen() {
         <div className="orbit-dot" />
       </div>
 
-      <div className="mono mt-9 text-center">
-        <div className="text-sm uppercase tracking-[0.5em] text-sky-300/60 hud-glow">
+      <div className="mono mt-9 px-6 text-center">
+        <div className="text-xs uppercase tracking-[0.35em] text-sky-300/60 hud-glow sm:text-sm sm:tracking-[0.5em]">
           Aman Mehtar · Orbital Portfolio
         </div>
-        <h1 className="mt-3 text-xl uppercase tracking-[0.35em] text-sky-100/90">
+        <h1 className="mt-3 text-lg uppercase tracking-[0.25em] text-sky-100/90 sm:text-xl sm:tracking-[0.35em]">
           Initializing navigation
         </h1>
       </div>

@@ -33,6 +33,11 @@ const _hold = new THREE.Vector3()
 const _toHold = new THREE.Vector3()
 const _target = new THREE.Vector3()
 const _offset = new THREE.Vector3()
+const _planet = new THREE.Vector3()
+const _follow = new THREE.Vector3()
+const _move = new THREE.Vector3()
+const _obst = new THREE.Vector3()
+const _away = new THREE.Vector3()
 const _q = new THREE.Quaternion()
 const _q2 = new THREE.Quaternion()
 
@@ -54,7 +59,16 @@ const BANK_RATE_FULL = 3.5
 const ATT_PITCH_MAX = 0.32
 const ATT_ROLL_MAX = 0.6
 const ATT_RATE_FULL = 3.5
-const FWD = new THREE.Vector3(0, 0, -1)
+const WARP_SPEED = 2700
+const WARP_MIN_SPEED = 300
+const WARP_EASE = 2.5
+const WARP_ARRIVE = 25
+const HOLD_RADII = 2.4
+const IMPACT_MIN_SPEED = 40
+const IMPACT_SHAKE = 0.004
+const WARP_IMPACT = 250
+const WARP_AVOID_MARGIN = 40
+const WARP_AVOID_RANGE = 2.5
 
 const MODEL_SCALE = 0.42
 const MODEL_ROTATION: [number, number, number] = [0, Math.PI, 0]
@@ -80,10 +94,12 @@ export function Ship() {
   const lastPos = useRef(new THREE.Vector3(HOME.x, HOME.y, HOME.z))
   const exitIntentional = useRef(false)
   const relockTimer = useRef(0)
+  const holding = useRef<string | null>(null)
+  const holdPos = useRef(new THREE.Vector3())
 
   const setLocked = useApp((s) => s.setLocked)
   const setSpeed = useApp((s) => s.setSpeed)
-  const warpTo = useApp((s) => s.warpTo)
+  const setHolding = useApp((s) => s.setHolding)
   const cancelWarp = useApp((s) => s.cancelWarp)
 
   const { scene, animations } = useGLTF('/ship/ship.glb')
@@ -204,6 +220,8 @@ export function Ship() {
             attRoll.current = 0
             shake.current = 0
             lastPos.current.copy(HOME)
+            holding.current = null
+            useApp.getState().setHolding(null)
           }
           break
         case 'Escape':
@@ -288,6 +306,7 @@ export function Ship() {
 
   useFrame((_, deltaRaw) => {
     const delta = Math.min(deltaRaw, 0.05)
+    const warpTo = useApp.getState().warpTo
     const pointerLocked = document.pointerLockElement === gl.domElement
     const touchLocked = isTouchDevice() && useApp.getState().locked
     const locked = pointerLocked || touchLocked
@@ -317,25 +336,66 @@ export function Ship() {
     ship.quaternion.setFromEuler(euler.current)
     modelRef.current?.rotation.set(attPitch.current, MODEL_ROTATION[1], attRoll.current, 'YXZ')
 
+    _follow.set(0, 0, 0)
+    if (holding.current) {
+      const entry = planetRegistry.get(holding.current)
+      const flying = keys.fwd || keys.brake || touchInput.thrust || touchInput.brake
+      if (!entry || flying || warpTo) {
+        holding.current = null
+        setHolding(null)
+      } else {
+        entry.object.getWorldPosition(_planet)
+        _follow.copy(_planet).sub(holdPos.current)
+        ship.position.add(_follow)
+        holdPos.current.copy(_planet)
+      }
+    }
+
     if (warpTo) {
+      vel.current.set(0, 0, 0)
       const entry = planetRegistry.get(warpTo)
-      if (entry) {
+      if (entry && !keys.brake && !touchInput.brake) {
         entry.object.getWorldPosition(_tmp)
         _dir.copy(_tmp).sub(ship.position).normalize()
-        const holdDist = entry.radius * 4 + 18
-        _hold.copy(_tmp).addScaledVector(_dir, holdDist)
+        const holdDist = entry.radius * HOLD_RADII + 18
+        _hold.copy(_tmp).addScaledVector(_dir, -holdDist)
 
         _toHold.copy(_hold).sub(ship.position)
         const dist = _toHold.length()
-        if (dist < holdDist + 2) {
+        if (dist < WARP_ARRIVE) {
           cancelWarp()
+          holding.current = warpTo
+          holdPos.current.copy(_tmp)
+          setHolding(warpTo)
         } else {
-          const step = Math.min(dist, 450 * delta * 6)
-          ship.position.addScaledVector(_toHold.normalize(), step)
-          _target.copy(_tmp).sub(ship.position).normalize()
-          _q.setFromUnitVectors(FWD, _target)
-          ship.quaternion.copy(_q)
-          euler.current.setFromQuaternion(ship.quaternion, 'YXZ')
+          const warpSpeed = Math.min(WARP_SPEED, WARP_MIN_SPEED + dist * WARP_EASE)
+          const step = Math.min(dist, warpSpeed * delta)
+          _move.copy(_toHold).divideScalar(dist)
+          for (const [id, body] of planetRegistry) {
+            if (id === warpTo) continue
+            body.object.getWorldPosition(_obst)
+            _away.copy(ship.position).sub(_obst)
+            const d = _away.length()
+            const clear = body.radius + SURFACE_CLEARANCE + WARP_AVOID_MARGIN
+            if (d >= clear * WARP_AVOID_RANGE || d < 1e-3) continue
+            _away.divideScalar(d)
+            const inward = _move.dot(_away)
+            if (inward >= 0) continue
+            const w = Math.min(1, (clear * WARP_AVOID_RANGE - d) / (clear * (WARP_AVOID_RANGE - 1)))
+            _move.addScaledVector(_away, -inward * w)
+            if (d < clear) _move.addScaledVector(_away, 0.3)
+            if (_move.lengthSq() < 1e-8) _move.set(-_away.z, 0, _away.x)
+            _move.normalize()
+          }
+          ship.position.addScaledVector(_move, step)
+          _target.copy(_move)
+          euler.current.set(
+            Math.max(-1.45, Math.min(1.45, Math.asin(_target.y))),
+            Math.atan2(-_target.x, -_target.z),
+            roll.current + bank.current,
+            'YXZ',
+          )
+          ship.quaternion.setFromEuler(euler.current)
           look.current.x = euler.current.x
           look.current.y = euler.current.y
           lastYaw.current = euler.current.y
@@ -412,7 +472,10 @@ export function Ship() {
         vel.current.addScaledVector(_dir, -vn * 1.35)
         vel.current.multiplyScalar(0.86)
       }
-      shake.current = Math.min(1.4, shake.current + Math.min(0.9, (minDist - dist) * 0.12))
+      const impact = warpTo ? WARP_IMPACT : -vn
+      if (impact > IMPACT_MIN_SPEED) {
+        shake.current = Math.min(1.4, shake.current + Math.min(0.9, impact * IMPACT_SHAKE))
+      }
       if (warpTo) cancelWarp()
     }
 
@@ -425,6 +488,7 @@ export function Ship() {
     }
     motion.speed = motion.velocity.length()
     motion.position.copy(ship.position)
+    const relSpeed = delta > 0 ? _tmp.copy(motion.velocity).addScaledVector(_follow, -1 / delta).length() : 0
     lastPos.current.copy(ship.position)
 
     // ---- thruster visuals ----
@@ -472,7 +536,7 @@ export function Ship() {
     camQ.current.slerp(ship.quaternion, 1 - Math.exp(-CAM_LAG_K * delta))
     camera.quaternion.copy(camQ.current)
 
-    setSpeed(Math.round(motion.speed))
+    setSpeed(Math.round(relSpeed))
   })
 
   return (

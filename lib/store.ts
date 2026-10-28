@@ -24,6 +24,9 @@ interface AppState {
   requestWarp: (id: string) => void
   cancelWarp: () => void
 
+  holdingId: string | null
+  setHolding: (id: string | null) => void
+
   mapOpen: boolean
   setMapOpen: (v: boolean) => void
 
@@ -64,6 +67,9 @@ export const useApp = create<AppState>((set, get) => ({
   warpTo: null,
   requestWarp: (id) => set({ warpTo: id }),
   cancelWarp: () => set({ warpTo: null }),
+
+  holdingId: null,
+  setHolding: (id) => set((s) => (s.holdingId === id ? s : { holdingId: id })),
 
   mapOpen: false,
   setMapOpen: (v) => set({ mapOpen: v }),

@@ -166,3 +166,23 @@ body {
 .fade-in {
   animation: fadeIn 0.25s ease forwards;
 }
+
+@keyframes toast {
+  0% { opacity: 0; }
+  12% { opacity: 1; }
+  70% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+.toast {
+  animation: toast 1.6s ease forwards;
+}
+
+.corner:focus-visible {
+  outline-offset: -4px;
+}
+
+.hud-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(159, 216, 255, 0.25) transparent;
+}
